@@ -1,0 +1,2 @@
+#!/bin/bash
+export SRC=app/src/main/java
