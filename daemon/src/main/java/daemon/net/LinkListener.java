@@ -1,4 +1,4 @@
-package net;
+package daemon.net;
 
 import java.net.Socket;
 import java.net.ServerSocket;

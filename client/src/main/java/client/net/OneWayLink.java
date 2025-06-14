@@ -1,4 +1,4 @@
-package net;
+package client.net;
 
 import java.net.Socket;
 import java.io.OutputStreamWriter;

@@ -1,4 +1,4 @@
-package net;
+package shared;
 
 public final class UserNetworkIdentifier {
 
