@@ -6,11 +6,7 @@ public final class UserNetworkIdentifier {
 
 	public UserNetworkIdentifier(String id) {
 
-		StringBuilder res = new StringBuilder();
-
-		for (int i = id.length() - 1; i > 0; i--)
-			res.append(id.charAt(i) + 20);
-		UNetID = res.toString();
+		UNetID = id;
 
 	}
 
@@ -28,11 +24,7 @@ public final class UserNetworkIdentifier {
 
 	public static String translate(UserNetworkIdentifier id) {
 
-		StringBuilder res = new StringBuilder();
-
-		for (int i = id.length() - 1; i > 0; i--)
-			res.append(id.charAt(i) - 20);
-		return res.toString();
+		return id.UNetID;
 
 	}
 

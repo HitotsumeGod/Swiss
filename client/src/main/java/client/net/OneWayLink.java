@@ -1,20 +1,22 @@
 package client.net;
 
 import java.net.Socket;
-import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.io.IOException;
+import shared.UserNetworkIdentifier;
 
 public class OneWayLink {
 
 	private static final int PORT = 7777;
 	private Socket linkSocket = null;
-	private OutputStreamWriter linkWriter = null;
+	private PrintWriter linkWriter = null;
 
 	public OneWayLink(UserNetworkIdentifier id) {
 
 		try {
+			System.out.println(UserNetworkIdentifier.translate(id));
 			linkSocket = new Socket(UserNetworkIdentifier.translate(id), PORT);
-			linkWriter = new OutputStreamWriter(linkSocket.getOutputStream());
+			linkWriter = new PrintWriter(linkSocket.getOutputStream());
 		} catch (IOException io) {
 			io.printStackTrace();
 		}
@@ -23,16 +25,12 @@ public class OneWayLink {
 
 	public void sendMessage(String message) {
 
-		try {
-			if (!linkSocket.isConnected()) {
-				System.out.println("Socket is NOT connected. Quitting!!!");
-				System.exit(-1);
-			}
-			linkWriter.write(message, 0, message.length());
-			linkWriter.flush();
-		} catch (IOException io) {
-			io.printStackTrace();
+		if (!linkSocket.isConnected()) {
+			System.out.println("Socket is NOT connected. Quitting!!!");
+			System.exit(-1);
 		}
+		linkWriter.write(message);
+		linkWriter.flush();
 
 	}
 

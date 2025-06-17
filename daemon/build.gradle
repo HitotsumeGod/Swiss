@@ -36,7 +36,11 @@ java {
 
 application {
     // Define the main class for the application.
-    mainClass = 'Pilot'
+    mainClass = 'daemon.Pilot'
+}
+
+run {
+    standardInput = System.in
 }
 
 tasks.named('test') {

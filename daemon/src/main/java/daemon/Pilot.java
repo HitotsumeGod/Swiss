@@ -1,6 +1,6 @@
 package daemon;
 
-import shared.UserNetworkInterface;
+import shared.UserNetworkIdentifier;
 import daemon.net.LinkListener;
 
 public class Pilot {

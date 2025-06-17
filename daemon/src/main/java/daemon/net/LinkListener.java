@@ -31,13 +31,14 @@ public class LinkListener {
 			if (client == null) {
 				client = server.accept();
 				clientReader = new InputStreamReader(client.getInputStream());
-			} 
+			}
 			if (!clientReader.ready())
-				return false;
+				return true;
 			str = new StringBuilder();
 			while ((c = clientReader.read()) > 0)
 				str.append((char) c);
 			System.out.println(str.toString());
+			System.out.println("recovering!!");
 		} catch (IOException io) {
 			io.printStackTrace();
 		}
