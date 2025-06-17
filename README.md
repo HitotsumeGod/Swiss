@@ -6,5 +6,4 @@ of privacy from its creators' private eyes, and provides ample opportunity for u
 This portability makes *Swiss* criminally easy to suggest to your friends, without the need to preach to them about the importance of FOSS or the GNU way of life. 
 Be it Linux, Windows, Mac, or FreeBSD, *Swiss* will run on it.
 
--------
     *Swiss* is written entirely by one godlike individual: Peter Naylor. Pay him money here so he likes you more: www.petermoney.com

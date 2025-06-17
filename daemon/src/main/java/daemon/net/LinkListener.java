@@ -3,6 +3,7 @@ package daemon.net;
 import java.net.Socket;
 import java.net.ServerSocket;
 import java.io.InputStreamReader;
+import java.io.BufferedReader;
 import java.io.IOException;
 
 public class LinkListener {
@@ -10,7 +11,7 @@ public class LinkListener {
 	private static final int PORT = 7777;
 	private ServerSocket server = null;
 	private Socket client = null;
-	private InputStreamReader clientReader = null;
+	private BufferedReader clientReader = null;
 
 	public LinkListener() {
 
@@ -22,28 +23,25 @@ public class LinkListener {
 
 	}
 
-	public boolean recover() {
-
-		StringBuilder str;
-		int c;
+	public void getFellow() {
 
 		try {
-			if (client == null) {
-				client = server.accept();
-				clientReader = new InputStreamReader(client.getInputStream());
-			}
-			if (!clientReader.ready())
-				return true;
-			str = new StringBuilder();
-			while ((c = clientReader.read()) > 0)
-				str.append((char) c);
-			System.out.println(str.toString());
-			System.out.println("recovering!!");
+			client = server.accept();
+			clientReader = new BufferedReader(new InputStreamReader(client.getInputStream()));
 		} catch (IOException io) {
 			io.printStackTrace();
 		}
-		return true;
 
+	}
+
+	public void printStuff() {
+
+		try {
+			System.out.println(clientReader.readLine());
+		} catch (IOException io) {
+			io.printStackTrace();
+		}
+		
 	}
 
 }
