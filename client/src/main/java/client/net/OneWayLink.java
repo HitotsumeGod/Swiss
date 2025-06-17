@@ -3,10 +3,10 @@ package client.net;
 import java.net.Socket;
 import java.io.PrintWriter;
 import java.io.IOException;
+import shared.Link;
 
-public class OneWayLink {
+public class OneWayLink implements Link {
 
-	private static final int PORT = 7777;
 	private Socket link;
 	private PrintWriter foucault;
 
@@ -23,6 +23,7 @@ public class OneWayLink {
 
 	public void sendMessage(String msg) {
 
+		foucault.println(HEADER);
 		foucault.println(msg);
 
 	}
