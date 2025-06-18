@@ -8,38 +8,8 @@ import javax.swing.JButton;
 import javax.swing.JTextField;
 import javax.swing.BoxLayout;
 import java.awt.Component;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
 
 public class Screen extends JFrame {
-
-	private class ComponentListener implements ActionListener {
-
-		//index 0 is action parent, 1 is 0's parent panel, 2 is 1's parent screen
-		private ArrayList<Component> components;
-
-		public ComponentListener(ArrayList<Component> components) {
-
-			this.components = components;
-
-		}
-
-		public void actionPerformed(ActionEvent e) {
-
-			JTextField answerText = new JTextField(16);
-
-			((JPanel) components.get(1)).add(answerText);
-			((Screen) components.get(2)).updateScreen();
-
-		}
-
-		public void load(ArrayList<Component> components) {
-
-			this.components.addAll(components);
-
-		}
-
-	}
 
 	private Screen() {}
 
@@ -52,13 +22,23 @@ public class Screen extends JFrame {
 
 	public static Screen createMenuScreen() { 
 
+		ArrayList<Component> components = new ArrayList<>();
 		Screen menuScreen = new Screen();
 		JPanel textPanel = new JPanel();
 		JPanel buttonPanel = new JPanel();
-		JLabel textLabel = new JLabel("Welcome to Swiss!\n-----OPTIONS-----\nCONNECT   GET   ADD\n");
+		JPanel inputPanel = new JPanel();
+		JLabel textLabel = new JLabel("Welcome to Swiss!");
 		JButton connectButton = new JButton("CONNECT");
 		JButton getButton = new JButton("GET");
 		JButton addButton = new JButton("ADD");
+		components.add(connectButton);
+		components.add(inputPanel);
+		components.add(menuScreen);
+		connectButton.addActionListener(new CButtonListener(components));
+		components.set(0, getButton);
+		getButton.addActionListener(new GButtonListener(components));
+		components.set(0, addButton);
+		addButton.addActionListener(new AButtonListener(components));
 		textPanel.add(textLabel);
 		buttonPanel.add(connectButton);
 		buttonPanel.add(getButton);

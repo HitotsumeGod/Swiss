@@ -23,7 +23,7 @@ public class LinkListener {
 		} catch (IOException io) {
 			io.printStackTrace();
 		}
-		logger = new Logger(new File("src/main/resources/linklistener.log"));
+		logger = new Logger("src/main/resources/linklistener.log");
 
 	}
 

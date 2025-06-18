@@ -7,13 +7,15 @@ import java.time.LocalTime;
 
 public class Logger {
 
+	private File logfile;
 	private FileWriter writer;
 	private StringBuilder logStr;
 
-	public Logger(File logfile) { 
+	public Logger(String logpath) { 
 		
 		try {
-			logfile.createNewFile();	
+			logfile = new File(logpath);
+			logfile.createNewFile();
 			writer = new FileWriter(logfile);
 		} catch (IOException io) {
 			io.printStackTrace();

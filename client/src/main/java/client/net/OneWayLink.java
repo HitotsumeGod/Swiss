@@ -22,6 +22,7 @@ public class OneWayLink implements Link {
 
 	}
 
+	@Override
 	public boolean sendMessage(String msg) {
 
 		foucault.println(HEADER);
@@ -31,6 +32,10 @@ public class OneWayLink implements Link {
 
 	}
 
+	@Override
+	public boolean recvMessage() { return false; }
+
+	@Override
 	public void close() {
 
 		try {

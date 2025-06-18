@@ -34,9 +34,6 @@ public class Pilot {
 		loadAssociates();
 		s = Screen.createMenuScreen();
 		s.updateScreen();
-		System.out.println("     Welcome to \033[3mSwiss!\033[0m\n");
-		System.out.println("     -----OPTIONS-----\n");
-		System.out.println("     CONNECT   GET   ADD\n");
 		while (true) {
 			response = scan.nextLine();
 			switch (response) {
