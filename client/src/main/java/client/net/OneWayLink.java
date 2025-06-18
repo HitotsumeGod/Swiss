@@ -14,17 +14,20 @@ public class OneWayLink implements Link {
 
 		try {
 			link = new Socket(hostname, PORT);
-			foucault = new PrintWriter(link.getOutputStream(), true);
+			foucault = new PrintWriter(link.getOutputStream());
 		} catch (IOException io) {
 			io.printStackTrace();
+			System.exit(1);
 		}
 
 	}
 
-	public void sendMessage(String msg) {
+	public boolean sendMessage(String msg) {
 
 		foucault.println(HEADER);
 		foucault.println(msg);
+		foucault.flush();
+		return true;
 
 	}
 

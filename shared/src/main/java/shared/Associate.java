@@ -3,12 +3,12 @@ package shared;
 public class Associate {
 
 	private final String username;
-	private final String hostname;
+	private final UserNetworkIdentifier unetid;
 
-	public Associate(String username, String hostname) {
+	public Associate(String username, UserNetworkIdentifier unetid) {
 
 		this.username = username;
-		this.hostname = hostname;
+		this.unetid = unetid;
 
 	}
 
@@ -20,7 +20,13 @@ public class Associate {
 
 	public String getHost() {
 
-		return hostname;
+		return UserNetworkIdentifier.decrypt(unetid);
+
+	}
+
+	public UserNetworkIdentifier getID() {
+
+		return unetid;
 
 	}
 
