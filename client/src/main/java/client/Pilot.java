@@ -1,19 +1,11 @@
 package client;
 
-import java.util.Scanner;
-import java.util.ArrayList;
-import java.net.Inet4Address;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.io.File;
-import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.io.BufferedReader;
 import java.io.IOException;
-import client.net.OneWayLink;
 import client.screen.Screen;
-import shared.UserNetworkIdentifier;
-import shared.Associate;
 import shared.AssociateHandler;
 
 public class Pilot {
@@ -22,17 +14,7 @@ public class Pilot {
 
 	public static void main(String[] args) {
 
-		Scanner scan = null;
-		OneWayLink link = null;
-		AssociateHandler handler;
-		Associate toContact;
-		String response;
-		Screen s;
-
-		toContact = null;
-		scan = new Scanner(System.in);
-		handler = new AssociateHandler();
-		s = Screen.createMenuScreen(handler);
+		Screen s = Screen.createMenuScreen(new AssociateHandler());
 		s.updateScreen();
 
 	}

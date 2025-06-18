@@ -8,6 +8,7 @@ import javax.swing.JButton;
 import javax.swing.JTextField;
 import javax.swing.BoxLayout;
 import java.awt.Component;
+import client.net.LinkHandler;
 import shared.AssociateHandler;
 
 public class Screen extends JFrame {
@@ -21,10 +22,11 @@ public class Screen extends JFrame {
 
 	}
 
-	public static Screen createMenuScreen(AssociateHandler handler) { 
+	public static Screen createMenuScreen(AssociateHandler assocHandler) { 
 
 		ArrayList<Component> components = new ArrayList<>();
 		Screen menuScreen = new Screen();
+		LinkHandler lkHandler = new LinkHandler(menuScreen);
 		JPanel textPanel = new JPanel();
 		JPanel buttonPanel = new JPanel();
 		JPanel inputPanel = new JPanel();
@@ -35,9 +37,9 @@ public class Screen extends JFrame {
 		components.add(inputPanel);
 		components.add(menuScreen);
 		inputPanel.setLayout(new BoxLayout(inputPanel, BoxLayout.Y_AXIS));
-		connectButton.addActionListener(new CButtonListener(components, handler));
-		getButton.addActionListener(new GButtonListener(components, handler));
-		addButton.addActionListener(new AButtonListener(components, handler));
+		connectButton.addActionListener(new CButtonListener(components, assocHandler, lkHandler));
+		getButton.addActionListener(new GButtonListener(components, assocHandler, lkHandler));
+		addButton.addActionListener(new AButtonListener(components, assocHandler, lkHandler));
 		textPanel.add(textLabel);
 		buttonPanel.add(connectButton);
 		buttonPanel.add(getButton);
@@ -50,6 +52,6 @@ public class Screen extends JFrame {
 
 	}
 
-	public static Screen createChatScreen(AssociateHandler handler) { return null; }
+	public static Screen createChatScreen(AssociateHandler assocHandler) { return null; }
 
 }
