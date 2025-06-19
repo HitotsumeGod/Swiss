@@ -20,7 +20,7 @@ public class TwoWayLink implements Link {
 	public TwoWayLink(String hostname) {
 
 		try {
-			logger = new Logger("src/main/resources/twowaylink.log");
+			logger = new Logger("src/main/resources/twowaylink.log", true);
 			server = new ServerSocket(PORT);
 		} catch (IOException io) {
 			io.printStackTrace();

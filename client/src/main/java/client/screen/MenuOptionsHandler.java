@@ -1,35 +1,45 @@
 package client.screen;
 
 import java.util.ArrayList;
+import javax.swing.JPanel;
+import javax.swing.JLabel;
+import javax.swing.JTextField;
+import java.awt.Component;
 import client.net.OneWayLink;
 import client.net.LinkHandler;
 import shared.AssociateHandler;
 import shared.Associate;
+import shared.Logger;
 
 public final class MenuOptionsHandler {
 
 	private MenuOptionsHandler() {}
 
-	public static void processCONNECT(String opts, AssociateHandler assocHandler, LinkHandler lkHandler) {
+	public static void performOneWayConnection(String opts, ArrayList<Component> components, AssociateHandler assocHandler, LinkHandler lkHandler) {
 
-		Associate abso = null;
+		Logger logger = null;
+		Associate assoc = null;
 		OneWayLink link = null;
+		JPanel panel = null;
+		JTextField text = null;
 
-		for (Associate a : assocHandler.getAssociates()) 
+		logger = new Logger("src/main/resources/menuoptionshandler.log", true);
+		panel = (JPanel) components.get(1);
+		for (Associate a : assocHandler.getAssociates())
 			if (a.getName().equals(opts)) {
-				abso = a;
+				assoc = a;
 				break;
 			}
-		if (abso != null)
-			link = new OneWayLink(abso.getHost());
+		if (assoc != null)
+			link = new OneWayLink(assoc.getHost());
 		if (link != null)
-			System.out.println("Connected to associate \033[3m" + abso.getName() + "\033[0m on host \033[3m" + abso.getHost() + "!\033[0m");
+			logger.write("Connected to associate " + assoc.getName() + " on host " + assoc.getHost() + "!");
 		link.close();
 
 	}
 
-	public static void processGET(String opts) {}
+	public static void performGetUNetID(String opts) {}
 
-	public static void processADD(String opts) {}
+	public static void performAddAssociate(String opts) {}
 
 }

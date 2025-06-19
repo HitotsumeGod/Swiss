@@ -7,6 +7,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import client.screen.Screen;
 import shared.AssociateHandler;
+import shared.Logger;
 
 public class Pilot {
 

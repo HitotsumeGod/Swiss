@@ -11,12 +11,12 @@ public class Logger {
 	private FileWriter writer;
 	private StringBuilder logStr;
 
-	public Logger(String logpath) { 
+	public Logger(String logpath, boolean append) {
 		
 		try {
 			logfile = new File(logpath);
 			logfile.createNewFile();
-			writer = new FileWriter(logfile);
+			writer = new FileWriter(logfile, append);
 		} catch (IOException io) {
 			io.printStackTrace();
 		}
@@ -24,6 +24,21 @@ public class Logger {
 	}
 
 	public void write(String toWrite) {
+
+		try {
+			logStr = new StringBuilder(LocalTime.now().toString());
+			logStr.append(" : ");
+			logStr.append(toWrite);
+			writer.write(logStr.toString(), 0, logStr.length());
+			writer.write((int) '\n');
+			writer.flush();
+		} catch (IOException io) {
+			io.printStackTrace();
+		}
+
+	}
+
+	public void append(String toWrite) {
 
 		try {
 			logStr = new StringBuilder(LocalTime.now().toString());
