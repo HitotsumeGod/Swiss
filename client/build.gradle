@@ -16,14 +16,8 @@ repositories {
 }
 
 dependencies {
-    // Use JUnit Jupiter for testing.
-    testImplementation libs.junit.jupiter
-
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-
     // This dependency is used by the application.
     implementation libs.guava
-
     implementation project(':shared')
 }
 
@@ -34,13 +28,17 @@ java {
     }
 }
 
+jar {
+    manifest {
+        attributes(
+                'Main-Class': 'client.Pilot'
+        )
+    }
+}
+
 application {
     // Define the main class for the application.
     mainClass = 'client.Pilot'
-}
-
-run {
-    standardInput = System.in
 }
 
 tasks.named('test') {

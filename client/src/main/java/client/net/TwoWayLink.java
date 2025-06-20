@@ -11,19 +11,36 @@ import shared.Logger;
 
 public class TwoWayLink implements Link {
 
-	private Logger logger;
-	private Socket client = null;
+	private Logger logger = null;
+	private Socket myClient, theirClient;
 	private ServerSocket server = null;
 	private BufferedReader reader = null;
 	private PrintWriter writer = null;
+	private String recvStr = null;
 
 	public TwoWayLink(String hostname) {
 
 		try {
 			logger = new Logger("src/main/resources/twowaylink.log", true);
 			server = new ServerSocket(PORT);
+			Thread t = new Thread(() -> {
+				try {
+					theirClient = server.accept();
+				} catch (IOException io) {
+					io.printStackTrace();
+				}
+			});
+			t.start();
+			myClient = new Socket(hostname, PORT);
+			try {
+				t.join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			reader = new BufferedReader(new InputStreamReader(theirClient.getInputStream()));
+			writer = new PrintWriter(myClient.getOutputStream());
+			logger.write("TwoWayLink established.");
 		} catch (IOException io) {
-			io.printStackTrace();
 		}
 
 	}
@@ -39,17 +56,18 @@ public class TwoWayLink implements Link {
 	}
 
 	@Override
-	public boolean recvMessage() {
+	public String recvMessage() {
 
 		try {
-			if (!reader.ready()) {
+			if (reader == null || !reader.ready()) {
 				logger.write("Stream is not ready for reading.");
-				return false;
+				return null;
 			}
+			recvStr = reader.readLine();
 		} catch (IOException io) {
 			io.printStackTrace();
 		}
-		return true;
+		return recvStr;
 
 	}
 
@@ -57,8 +75,10 @@ public class TwoWayLink implements Link {
 	public void close() {
 
 		try {
-			if (client != null)
-				client.close();
+			if (myClient != null)
+				myClient.close();
+			if (theirClient != null)
+				theirClient.close();
 			if (server != null)
 				server.close();
 			if (reader != null)
@@ -68,19 +88,6 @@ public class TwoWayLink implements Link {
 		} catch (IOException io) {
 			io.printStackTrace();
 		}
-
-	}
-
-	public boolean acceptConnection() {
-
-		try {
-			client = server.accept();
-			reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
-			writer = new PrintWriter(client.getOutputStream());
-		} catch (IOException io) {
-			io.printStackTrace();
-		}
-		return true;
 
 	}
 

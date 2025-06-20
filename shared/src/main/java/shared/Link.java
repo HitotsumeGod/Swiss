@@ -6,7 +6,7 @@ public interface Link {
 	int PORT = 7777;
 
 	boolean sendMessage(String msg);
-	boolean recvMessage();
+	String recvMessage();
 	void close();
 
 }

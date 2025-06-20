@@ -1,9 +1,16 @@
 package client.screen;
 
 import java.util.ArrayList;
-import javax.swing.*;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JLabel;
+import javax.swing.JButton;
+import javax.swing.JTextField;
+import javax.swing.BoxLayout;
 import java.awt.Component;
 import client.net.LinkHandler;
+import client.net.OneWayLink;
+import client.net.TwoWayLink;
 import shared.Associate;
 import shared.AssociateHandler;
 import shared.Logger;
@@ -19,9 +26,10 @@ public class Screen extends JFrame {
 
 	}
 
-	public static Screen createMenuScreen(AssociateHandler assocHandler) {
+	public static Screen createMenuScreen() {
 
 		ArrayList<Component> components = new ArrayList<>();
+		AssociateHandler assocHandler = new AssociateHandler();
 		Screen menuScreen = new Screen();
 		LinkHandler lkHandler = new LinkHandler(menuScreen);
 		JPanel textPanel = new JPanel();
@@ -45,11 +53,21 @@ public class Screen extends JFrame {
 						sb.append(a.getID() + " : " + a.getName() + " ---> " + a.getHost() + "<br>");
 					sb.append("</html>");
 					answerText.addActionListener(eb -> {
+						String s1 = answerText.getText();
+						JTextField msgText = new JTextField(16);
 						answerText.setText(null);
 						components.add(answerText);
 						components.add(inputPanel);
 						components.add(menuScreen);
-						MenuOptionsHandler.performOneWayConnection(answerText.getText(), components, assocHandler, lkHandler);
+						OneWayLink link = MenuOptionsHandler.initOneWayConnection(s1, assocHandler, lkHandler);
+						msgText.addActionListener(ec -> {
+							String s2 = msgText.getText();
+							msgText.setText(null);
+							link.sendMessage(s2);
+						});
+						inputPanel.remove(answerText);
+						inputPanel.add(msgText);
+						menuScreen.updateScreen();
 					});
 					inputPanel.add(new JLabel("Please enter the name of the associate you wish to contact."));
 					inputPanel.add(new JLabel(sb.toString()));
@@ -66,11 +84,32 @@ public class Screen extends JFrame {
 						sb.append(a.getID() + " : " + a.getName() + " ---> " + a.getHost() + "<br>");
 					sb.append("</html>");
 					answerText.addActionListener(ec -> {
+						String s1 = answerText.getText();
+						JTextField msgText = new JTextField(16);
 						answerText.setText(null);
 						components.add(answerText);
 						components.add(inputPanel);
 						components.add(menuScreen);
-						MenuOptionsHandler.performOneWayConnection(answerText.getText(), components, assocHandler, lkHandler);
+						TwoWayLink link = MenuOptionsHandler.initTwoWayConnection(s1, assocHandler, lkHandler);
+						msgText.addActionListener(ed -> {
+							String s2 = msgText.getText();
+							msgText.setText(null);
+							link.sendMessage(s2);
+						});
+						inputPanel.remove(answerText);
+						inputPanel.add(msgText);
+						menuScreen.updateScreen();
+						/*while (true) {
+                            String s3 = link.recvMessage();
+							if (s3 == null) {
+								try {
+									Thread.sleep(1000);
+								} catch (InterruptedException ex) {
+									throw new RuntimeException(ex);
+								}
+							}
+							System.out.println(s3);
+						}*/
 					});
 					inputPanel.add(new JLabel("Please enter the name of the associate you wish to contact."));
 					inputPanel.add(new JLabel(sb.toString()));
@@ -114,6 +153,6 @@ public class Screen extends JFrame {
 
 	}
 
-	public static Screen createChatScreen(AssociateHandler assocHandler) { return null; }
+	public static Screen createChatScreen() { return null; }
 
 }

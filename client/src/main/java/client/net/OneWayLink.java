@@ -33,7 +33,7 @@ public class OneWayLink implements Link {
 	}
 
 	@Override
-	public boolean recvMessage() { return false; }
+	public String recvMessage() { return null; }
 
 	@Override
 	public void close() {
