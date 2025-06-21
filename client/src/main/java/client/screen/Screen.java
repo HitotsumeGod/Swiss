@@ -7,7 +7,11 @@ import javax.swing.JLabel;
 import javax.swing.JButton;
 import javax.swing.JTextField;
 import javax.swing.BoxLayout;
+import javax.swing.SwingConstants;
 import java.awt.Component;
+import java.awt.FlowLayout;
+import java.awt.BorderLayout;
+import java.awt.GridLayout;
 import client.net.LinkHandler;
 import client.net.OneWayLink;
 import client.net.TwoWayLink;
@@ -17,20 +21,24 @@ import shared.Logger;
 
 public class Screen extends JFrame {
 
-	private Screen() {}
+	private final Screen previousScreen;
+
+	private Screen(Screen previousScreen) { this.previousScreen = previousScreen; }
 
 	public void updateScreen() {
 
+		if (this.previousScreen != null)
+			this.previousScreen.setVisible(false);
 		this.pack();
 		this.setVisible(true);
 
 	}
 
-	public static Screen createMenuScreen() {
+	public static Screen createMenuScreen(Screen previousScreen) {
 
 		ArrayList<Component> components = new ArrayList<>();
 		AssociateHandler assocHandler = new AssociateHandler();
-		Screen menuScreen = new Screen();
+		Screen menuScreen = new Screen(previousScreen);
 		LinkHandler lkHandler = new LinkHandler(menuScreen);
 		JPanel textPanel = new JPanel();
 		JPanel buttonPanel = new JPanel();
@@ -54,20 +62,13 @@ public class Screen extends JFrame {
 					sb.append("</html>");
 					answerText.addActionListener(eb -> {
 						String s1 = answerText.getText();
-						JTextField msgText = new JTextField(16);
 						answerText.setText(null);
 						components.add(answerText);
 						components.add(inputPanel);
 						components.add(menuScreen);
 						OneWayLink link = MenuOptionsHandler.initOneWayConnection(s1, assocHandler, lkHandler);
-						msgText.addActionListener(ec -> {
-							String s2 = msgText.getText();
-							msgText.setText(null);
-							link.sendMessage(s2);
-						});
-						inputPanel.remove(answerText);
-						inputPanel.add(msgText);
-						menuScreen.updateScreen();
+						Screen chatScreen = createChatScreen(s1, link, menuScreen);
+						chatScreen.updateScreen();
 					});
 					inputPanel.add(new JLabel("Please enter the name of the associate you wish to contact."));
 					inputPanel.add(new JLabel(sb.toString()));
@@ -85,31 +86,13 @@ public class Screen extends JFrame {
 					sb.append("</html>");
 					answerText.addActionListener(ec -> {
 						String s1 = answerText.getText();
-						JTextField msgText = new JTextField(16);
 						answerText.setText(null);
 						components.add(answerText);
 						components.add(inputPanel);
 						components.add(menuScreen);
 						TwoWayLink link = MenuOptionsHandler.initTwoWayConnection(s1, assocHandler, lkHandler);
-						msgText.addActionListener(ed -> {
-							String s2 = msgText.getText();
-							msgText.setText(null);
-							link.sendMessage(s2);
-						});
-						inputPanel.remove(answerText);
-						inputPanel.add(msgText);
-						menuScreen.updateScreen();
-						/*while (true) {
-                            String s3 = link.recvMessage();
-							if (s3 == null) {
-								try {
-									Thread.sleep(1000);
-								} catch (InterruptedException ex) {
-									throw new RuntimeException(ex);
-								}
-							}
-							System.out.println(s3);
-						}*/
+						Screen chatScreen = Screen.createChatScreen(s1, link, menuScreen);
+						chatScreen.updateScreen();
 					});
 					inputPanel.add(new JLabel("Please enter the name of the associate you wish to contact."));
 					inputPanel.add(new JLabel(sb.toString()));
@@ -153,6 +136,70 @@ public class Screen extends JFrame {
 
 	}
 
-	public static Screen createChatScreen() { return null; }
+	public static Screen createChatScreen(String title, OneWayLink link, Screen previousScreen) {
+
+		Screen chatScreen = new Screen(previousScreen);
+		JPanel infoPanel = new JPanel();
+		JPanel chatPanel = new JPanel();
+		JLabel screenTitle = new JLabel("Messaging " + title, SwingConstants.LEFT);
+		JLabel[] msgs = new JLabel[15];
+		for (int i = 0; i < msgs.length; i++)
+			msgs[i] = new JLabel();
+		JTextField msgField = new JTextField(16);
+		msgField.addActionListener(e -> {
+			String s1 = msgField.getText();
+			msgField.setText(null);
+			link.sendMessage(s1);
+			msgs[0].setText(s1);
+			rollArray(msgs);
+			for (int i = 0; i < msgs.length; i++)
+				msgs[i].repaint();
+		});
+		infoPanel.setLayout(new BorderLayout());
+		chatPanel.setLayout(new BoxLayout(chatPanel, BoxLayout.Y_AXIS));
+        for (JLabel l : msgs)
+			chatPanel.add(l);
+		chatPanel.add(msgField);
+		infoPanel.add(screenTitle, BorderLayout.LINE_START);
+		chatScreen.setLayout(new BoxLayout(chatScreen.getContentPane(), BoxLayout.Y_AXIS));
+		chatScreen.add(infoPanel);
+		chatScreen.add(chatPanel);
+		chatScreen.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		return chatScreen;
+
+	}
+
+	public static Screen createChatScreen(String title, TwoWayLink link, Screen previousScreen) {
+
+		Screen chatScreen = new Screen(previousScreen);
+		JPanel infoPanel = new JPanel();
+		JPanel chatPanel = new JPanel();
+		JLabel screenTitle = new JLabel("Chatting with " + title);
+		JLabel[] yourMessages = new JLabel[5];
+		JLabel[] theirMessages = new JLabel[5];
+		chatPanel.setLayout(new GridLayout(yourMessages.length, 2));
+		infoPanel.add(screenTitle);
+		for (int i = 0; i < yourMessages.length; i++)
+			chatPanel.add((yourMessages[i]) = new JLabel());
+		for (int i = 0; i < theirMessages.length; i++)
+			chatPanel.add((theirMessages[i]) = new JLabel());
+		chatScreen.setLayout(new FlowLayout());
+		chatScreen.add(infoPanel);
+		chatScreen.add(chatPanel);
+		chatScreen.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		chatScreen.previousScreen.setVisible(false);
+		return chatScreen;
+
+	}
+
+	private static void rollArray(Object[] arr) {
+
+		Object[] temp = arr.clone();
+
+		for (int i = 1; i < arr.length; i++)
+			arr[i] = temp[i - 1];
+		arr[0] = temp[temp.length - 1];
+
+	}
 
 }

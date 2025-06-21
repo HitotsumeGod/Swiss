@@ -4,7 +4,9 @@ import java.net.Socket;
 import java.net.ServerSocket;
 import java.io.File;
 import java.io.InputStreamReader;
+import java.io.FileWriter;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import shared.Logger;
 import shared.Link;
@@ -15,15 +17,17 @@ public class LinkListener {
 	private ServerSocket server = null;
 	private Socket client = null;
 	private BufferedReader clientReader = null;
+	private BufferedWriter fileWriter = null;
 
 	public LinkListener() {
 
 		try {
 			server = new ServerSocket(Link.PORT);
+			fileWriter = new BufferedWriter(new FileWriter(new File("src/main/resources/msgs.db")));
 		} catch (IOException io) {
 			io.printStackTrace();
 		}
-		logger = new Logger("src/main/resources/linklistener.log");
+		logger = new Logger("src/main/resources/linklistener.log", false);
 
 	}
 
@@ -41,15 +45,21 @@ public class LinkListener {
 
 	public boolean getMessage() {
 
+		String lineRead;
+
 		if (client == null) {
 			logger.write("No available client!");
 			return false;
 		}
 		try {
-			if (clientReader.readLine().equals(Link.HEADER))
-				System.out.println(clientReader.readLine());
+			if (clientReader.readLine().equals(Link.HEADER)) {
+				fileWriter.write((lineRead = clientReader.readLine()), 0, lineRead.length());
+				fileWriter.write('\n');
+				fileWriter.flush();
+			}
 		} catch (IOException io) {
-			io.printStackTrace();
+			logger.write("Client closed the connection.");
+			return false;
 		}
 		return true;
 

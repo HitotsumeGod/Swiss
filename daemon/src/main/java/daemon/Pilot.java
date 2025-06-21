@@ -12,7 +12,7 @@ public class Pilot {
 		Logger logger;
 
 		link = new LinkListener();
-		logger = new Logger("src/main/resources/pilot.log");
+		logger = new Logger("src/main/resources/pilot.log", true);
 		link.getClient();
 		while (link.getMessage());
 

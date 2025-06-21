@@ -6,7 +6,7 @@ public class Pilot {
 
 	public static void main(String[] args) {
 
-		Screen s = Screen.createMenuScreen();
+		Screen s = Screen.createMenuScreen(null);
 		s.updateScreen();
 
 	}
