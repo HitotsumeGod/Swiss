@@ -23,11 +23,11 @@ public class LinkListener {
 
 		try {
 			server = new ServerSocket(Link.PORT);
-			fileWriter = new BufferedWriter(new FileWriter(new File("src/main/resources/msgs.db")));
+			fileWriter = new BufferedWriter(new FileWriter("data/msgs.db"));
 		} catch (IOException io) {
 			io.printStackTrace();
 		}
-		logger = new Logger("src/main/resources/linklistener.log", false);
+		logger = new Logger("logs/linklistener.log", false);
 
 	}
 
@@ -56,6 +56,7 @@ public class LinkListener {
 				fileWriter.write((lineRead = clientReader.readLine()), 0, lineRead.length());
 				fileWriter.write('\n');
 				fileWriter.flush();
+				System.out.println(lineRead);
 			}
 		} catch (IOException io) {
 			logger.write("Client closed the connection.");

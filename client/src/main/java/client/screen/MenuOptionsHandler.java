@@ -1,6 +1,5 @@
 package client.screen;
 
-import java.util.ArrayList;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -11,7 +10,6 @@ import javax.swing.JLabel;
 import javax.swing.JTextField;
 import java.awt.Component;
 import client.net.OneWayLink;
-import client.net.LinkHandler;
 import client.net.TwoWayLink;
 import shared.AssociateHandler;
 import shared.Associate;
@@ -21,12 +19,12 @@ public final class MenuOptionsHandler {
 
 	private MenuOptionsHandler() {}
 
-	public static OneWayLink initOneWayConnection(String opts, AssociateHandler assocHandler, LinkHandler lkHandler) {
+	public static OneWayLink initOneWayConnection(String opts, AssociateHandler assocHandler) {
 
 		Associate assoc = null;
 		OneWayLink link = null;
 
-		Logger logger = new Logger("src/main/resources/menuoptionshandler.log", true);
+		Logger logger = new Logger("logs/menuoptionshandler.log", true);
 		for (Associate a : assocHandler.getAssociates())
 			if (a.getName().equals(opts)) {
 				assoc = a;
@@ -40,12 +38,12 @@ public final class MenuOptionsHandler {
 
 	}
 
-	public static TwoWayLink initTwoWayConnection(String opts, AssociateHandler assocHandler, LinkHandler lkHandler) {
+	public static TwoWayLink initTwoWayConnection(String opts, AssociateHandler assocHandler) {
 
 		Associate assoc = null;
 		TwoWayLink link = null;
 
-		Logger logger = new Logger("src/main/resources/menuoptionshandler.log", true);
+		Logger logger = new Logger("logs/menuoptionshandler.log", true);
 		for (Associate a : assocHandler.getAssociates())
 			if (a.getName().equals(opts)) {
 				assoc = a;
@@ -63,6 +61,7 @@ public final class MenuOptionsHandler {
 			else
 				break;
 		}
+		System.out.println(link.toString());
 		logger.write("Connected to associate " + assoc.getName() + " on host " + assoc.getHost() + '.');
 		return link;
 

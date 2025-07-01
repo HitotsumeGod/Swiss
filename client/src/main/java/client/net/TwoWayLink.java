@@ -21,13 +21,14 @@ public class TwoWayLink implements Link {
 	public TwoWayLink(String hostname) {
 
 		try {
-			logger = new Logger("src/main/resources/twowaylink.log", true);
+			logger = new Logger("logs/twowaylink.log", true);
 			server = new ServerSocket(PORT);
 			Thread t = new Thread(() -> {
 				try {
 					theirClient = server.accept();
 				} catch (IOException io) {
-					io.printStackTrace();
+					System.out.println("EXCEPTION KILL");
+					System.exit(1);
 				}
 			});
 			t.start();
@@ -35,7 +36,8 @@ public class TwoWayLink implements Link {
 			try {
 				t.join();
 			} catch (InterruptedException e) {
-				e.printStackTrace();
+				System.out.println("EXCEPTION KILL");
+				System.exit(1);
 			}
 			reader = new BufferedReader(new InputStreamReader(theirClient.getInputStream()));
 			writer = new PrintWriter(myClient.getOutputStream());
@@ -88,6 +90,13 @@ public class TwoWayLink implements Link {
 		} catch (IOException io) {
 			io.printStackTrace();
 		}
+
+	}
+
+	@Override
+	public String toString() {
+
+		return myClient.getLocalAddress().toString();
 
 	}
 

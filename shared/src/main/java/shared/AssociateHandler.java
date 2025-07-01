@@ -8,7 +8,7 @@ import java.io.IOException;
 
 public class AssociateHandler {
 
-	private static final String ASSOCIATEDBPATH = "src/main/resources/assocs.db";
+	private static final String ASSOCIATEDBPATH = "data/assocs.db";
 	private ArrayList<Associate> associateList;
 
 	public AssociateHandler() {
@@ -20,13 +20,16 @@ public class AssociateHandler {
 
 	private void loadAssociates() {
 
+		File ff;
 		BufferedReader reader;
 		String lne;
 		int n;
 
 		n = 0;
 		try {
-			reader = new BufferedReader(new FileReader(new File(ASSOCIATEDBPATH)));
+			if (!(ff = new File(ASSOCIATEDBPATH)).exists())
+				ff.createNewFile();
+			reader = new BufferedReader(new FileReader(ff));
 			while ((lne = reader.readLine()) != null)
 				associateList.add(new Associate(lne.substring(0, lne.indexOf('%')), new UserNetworkIdentifier(lne.substring(lne.indexOf('%') + 1))));
 			reader.close();

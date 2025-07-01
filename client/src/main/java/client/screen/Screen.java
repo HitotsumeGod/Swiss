@@ -12,7 +12,6 @@ import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
-import client.net.LinkHandler;
 import client.net.OneWayLink;
 import client.net.TwoWayLink;
 import shared.Associate;
@@ -39,7 +38,6 @@ public class Screen extends JFrame {
 		ArrayList<Component> components = new ArrayList<>();
 		AssociateHandler assocHandler = new AssociateHandler();
 		Screen menuScreen = new Screen(previousScreen);
-		LinkHandler lkHandler = new LinkHandler(menuScreen);
 		JPanel textPanel = new JPanel();
 		JPanel buttonPanel = new JPanel();
 		JPanel inputPanel = new JPanel();
@@ -66,9 +64,14 @@ public class Screen extends JFrame {
 						components.add(answerText);
 						components.add(inputPanel);
 						components.add(menuScreen);
-						OneWayLink link = MenuOptionsHandler.initOneWayConnection(s1, assocHandler, lkHandler);
-						Screen chatScreen = createChatScreen(s1, link, menuScreen);
-						chatScreen.updateScreen();
+						OneWayLink link = MenuOptionsHandler.initOneWayConnection(s1, assocHandler);
+						if (link.checkState()) {
+							Screen chatScreen = createChatScreen(s1, link, menuScreen);
+							chatScreen.updateScreen();
+						} else {
+							link = null;
+							answerText.setText("ASSOCIATE IS NOT REACHABLE");
+						}
 					});
 					inputPanel.add(new JLabel("Please enter the name of the associate you wish to contact."));
 					inputPanel.add(new JLabel(sb.toString()));
@@ -90,9 +93,12 @@ public class Screen extends JFrame {
 						components.add(answerText);
 						components.add(inputPanel);
 						components.add(menuScreen);
-						TwoWayLink link = MenuOptionsHandler.initTwoWayConnection(s1, assocHandler, lkHandler);
+						TwoWayLink link = MenuOptionsHandler.initTwoWayConnection(s1, assocHandler);
+						assert(link != null);
+						System.out.println(link);
 						Screen chatScreen = Screen.createChatScreen(s1, link, menuScreen);
 						chatScreen.updateScreen();
+						while (link.recvMessage() != null);
 					});
 					inputPanel.add(new JLabel("Please enter the name of the associate you wish to contact."));
 					inputPanel.add(new JLabel(sb.toString()));
@@ -146,14 +152,20 @@ public class Screen extends JFrame {
 		for (int i = 0; i < msgs.length; i++)
 			msgs[i] = new JLabel();
 		JTextField msgField = new JTextField(16);
+		JButton closeButton = new JButton("DISCONNECT");
 		msgField.addActionListener(e -> {
 			String s1 = msgField.getText();
 			msgField.setText(null);
 			link.sendMessage(s1);
 			msgs[0].setText(s1);
 			rollArray(msgs);
-			for (int i = 0; i < msgs.length; i++)
-				msgs[i].repaint();
+            for (JLabel msg : msgs)
+				msg.repaint();
+		});
+		closeButton.addActionListener(e -> {
+			link.close();
+			chatScreen.setVisible(false);
+			chatScreen.previousScreen.setVisible(true);
 		});
 		infoPanel.setLayout(new BorderLayout());
 		chatPanel.setLayout(new BoxLayout(chatPanel, BoxLayout.Y_AXIS));
@@ -161,6 +173,7 @@ public class Screen extends JFrame {
 			chatPanel.add(l);
 		chatPanel.add(msgField);
 		infoPanel.add(screenTitle, BorderLayout.LINE_START);
+		infoPanel.add(closeButton, BorderLayout.EAST);
 		chatScreen.setLayout(new BoxLayout(chatScreen.getContentPane(), BoxLayout.Y_AXIS));
 		chatScreen.add(infoPanel);
 		chatScreen.add(chatPanel);
@@ -174,20 +187,37 @@ public class Screen extends JFrame {
 		Screen chatScreen = new Screen(previousScreen);
 		JPanel infoPanel = new JPanel();
 		JPanel chatPanel = new JPanel();
-		JLabel screenTitle = new JLabel("Chatting with " + title);
-		JLabel[] yourMessages = new JLabel[5];
-		JLabel[] theirMessages = new JLabel[5];
-		chatPanel.setLayout(new GridLayout(yourMessages.length, 2));
-		infoPanel.add(screenTitle);
-		for (int i = 0; i < yourMessages.length; i++)
-			chatPanel.add((yourMessages[i]) = new JLabel());
-		for (int i = 0; i < theirMessages.length; i++)
-			chatPanel.add((theirMessages[i]) = new JLabel());
-		chatScreen.setLayout(new FlowLayout());
+		JLabel screenTitle = new JLabel("Messaging " + title, SwingConstants.LEFT);
+		JLabel[] msgs = new JLabel[15];
+		for (int i = 0; i < msgs.length; i++)
+			msgs[i] = new JLabel();
+		JTextField msgField = new JTextField(16);
+		JButton closeButton = new JButton("DISCONNECT");
+		msgField.addActionListener(e -> {
+			String s1 = msgField.getText();
+			msgField.setText(null);
+			link.sendMessage(s1);
+			msgs[0].setText(s1);
+			rollArray(msgs);
+            for (JLabel msg : msgs)
+				msg.repaint();
+		});
+		closeButton.addActionListener(e -> {
+			link.close();
+			chatScreen.setVisible(false);
+			chatScreen.previousScreen.setVisible(true);
+		});
+		infoPanel.setLayout(new BorderLayout());
+		chatPanel.setLayout(new BoxLayout(chatPanel, BoxLayout.Y_AXIS));
+		for (JLabel l : msgs)
+			chatPanel.add(l);
+		chatPanel.add(msgField);
+		infoPanel.add(screenTitle, BorderLayout.LINE_START);
+		infoPanel.add(closeButton, BorderLayout.EAST);
+		chatScreen.setLayout(new BoxLayout(chatScreen.getContentPane(), BoxLayout.Y_AXIS));
 		chatScreen.add(infoPanel);
 		chatScreen.add(chatPanel);
 		chatScreen.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		chatScreen.previousScreen.setVisible(false);
 		return chatScreen;
 
 	}
