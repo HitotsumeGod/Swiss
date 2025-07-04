@@ -23,9 +23,11 @@ public class TwoWayLink implements Link {
 			logger = new Logger("logs/twowaylink.log", false);
 			try {
 				sock = new Socket(hostname, PORT);
+				logger.write("Modular nature negotiated; link is SERVER.");
 			} catch (IOException noConnect) {
 				server = new ServerSocket(PORT);
 				sock = server.accept();
+				logger.write("Modular nature negotiated; link is SERVER.");
 			}
 			reader = new BufferedReader(new InputStreamReader(sock.getInputStream()));
 			writer = new PrintWriter(sock.getOutputStream());

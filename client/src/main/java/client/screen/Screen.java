@@ -9,20 +9,25 @@ import javax.swing.JTextField;
 import javax.swing.BoxLayout;
 import javax.swing.SwingConstants;
 import java.awt.Component;
-import java.awt.FlowLayout;
 import java.awt.BorderLayout;
-import java.awt.GridLayout;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import client.net.OneWayLink;
 import client.net.TwoWayLink;
 import shared.Associate;
 import shared.AssociateHandler;
-import shared.Logger;
 
 public class Screen extends JFrame {
 
 	private final Screen previousScreen;
+	private final ExecutorService threadCommand;
 
-	private Screen(Screen previousScreen) { this.previousScreen = previousScreen; }
+	private Screen(Screen previousScreen) {
+
+		this.previousScreen = previousScreen;
+		threadCommand = Executors.newCachedThreadPool();
+
+	}
 
 	public void updateScreen() {
 
@@ -64,7 +69,7 @@ public class Screen extends JFrame {
 						components.add(answerText);
 						components.add(inputPanel);
 						components.add(menuScreen);
-						OneWayLink link = MenuOptionsHandler.initOneWayConnection(s1, assocHandler);
+						OneWayLink link = MyStaticMethods.initOneWayConnection(s1, assocHandler);
 						if (link.checkState()) {
 							Screen chatScreen = createChatScreen(s1, link, menuScreen);
 							chatScreen.updateScreen();
@@ -89,14 +94,16 @@ public class Screen extends JFrame {
 					sb.append("</html>");
 					answerText.addActionListener(ec -> {
 						String s1 = answerText.getText();
-						answerText.setText(null);
+						answerText.setText("Waiting for " + s1 + " to connect...");
 						components.add(answerText);
 						components.add(inputPanel);
 						components.add(menuScreen);
-						TwoWayLink link = MenuOptionsHandler.initTwoWayConnection(s1, assocHandler);
-						assert(link != null);
-						Screen chatScreen = Screen.createChatScreen(s1, link, menuScreen);
-						chatScreen.updateScreen();
+						menuScreen.threadCommand.execute(() -> {
+							TwoWayLink link = MyStaticMethods.initTwoWayConnection(s1, assocHandler);
+							assert (link != null);
+							Screen chatScreen = Screen.createChatScreen(s1, link, menuScreen);
+							chatScreen.updateScreen();
+						});
 					});
 					inputPanel.add(new JLabel("Please enter the name of the associate you wish to contact."));
 					inputPanel.add(new JLabel(sb.toString()));
@@ -113,7 +120,7 @@ public class Screen extends JFrame {
 		getButton.addActionListener(ea -> {
 			if (inputPanel.getComponentCount() == 0) {
 				JTextField answerText = new JTextField(16);
-				answerText.addActionListener(eb -> { MenuOptionsHandler.performGetUNetID(answerText.getText()); });
+				answerText.addActionListener(eb -> { MyStaticMethods.performGetUNetID(answerText.getText()); });
 				inputPanel.add(answerText);
 				menuScreen.add(inputPanel);
 				menuScreen.updateScreen();
@@ -122,7 +129,7 @@ public class Screen extends JFrame {
 		addButton.addActionListener(ec -> {
 			if (inputPanel.getComponentCount() == 0) {
 				JTextField answerText = new JTextField(16);
-				answerText.addActionListener(eb -> { MenuOptionsHandler.performAddAssociate(answerText.getText()); });
+				answerText.addActionListener(eb -> { MyStaticMethods.performAddAssociate(answerText.getText()); });
 				inputPanel.add(answerText);
 				menuScreen.add(inputPanel);
 				menuScreen.updateScreen();
@@ -214,19 +221,19 @@ public class Screen extends JFrame {
 		chatScreen.add(infoPanel);
 		chatScreen.add(chatPanel);
 		chatScreen.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		Thread recv = new Thread(() -> {
+		chatScreen.threadCommand.execute(() -> {
 			String line = null;
-			while ((line = link.recvMessage()) != null) {
-				msgs[0].setText(line);
-				rollArray(msgs);
-				try {
+			try {
+				Thread.sleep(500);
+				while ((line = link.recvMessage()) != null) {
+					msgs[0].setText(title + " : " + line);
+					rollArray(msgs);
 					Thread.sleep(500);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
 				}
+			} catch (InterruptedException e) {
+				e.printStackTrace();
 			}
 		});
-		recv.start();
 		return chatScreen;
 
 	}

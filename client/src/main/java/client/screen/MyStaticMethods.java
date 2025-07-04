@@ -5,19 +5,15 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
-import javax.swing.JPanel;
-import javax.swing.JLabel;
-import javax.swing.JTextField;
-import java.awt.Component;
 import client.net.OneWayLink;
 import client.net.TwoWayLink;
 import shared.AssociateHandler;
 import shared.Associate;
 import shared.Logger;
 
-public final class MenuOptionsHandler {
+public final class MyStaticMethods {
 
-	private MenuOptionsHandler() {}
+	private MyStaticMethods() {}
 
 	public static OneWayLink initOneWayConnection(String opts, AssociateHandler assocHandler) {
 
@@ -43,7 +39,7 @@ public final class MenuOptionsHandler {
 		Associate assoc = null;
 		TwoWayLink link = null;
 
-		Logger logger = new Logger("logs/menuoptionshandler.log", true);
+		Logger logger = new Logger("logs/menuoptionshandler.log", false);
 		for (Associate a : assocHandler.getAssociates())
 			if (a.getName().equals(opts)) {
 				assoc = a;
