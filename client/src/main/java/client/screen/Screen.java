@@ -95,10 +95,8 @@ public class Screen extends JFrame {
 						components.add(menuScreen);
 						TwoWayLink link = MenuOptionsHandler.initTwoWayConnection(s1, assocHandler);
 						assert(link != null);
-						System.out.println(link);
 						Screen chatScreen = Screen.createChatScreen(s1, link, menuScreen);
 						chatScreen.updateScreen();
-						while (link.recvMessage() != null);
 					});
 					inputPanel.add(new JLabel("Please enter the name of the associate you wish to contact."));
 					inputPanel.add(new JLabel(sb.toString()));
@@ -199,8 +197,6 @@ public class Screen extends JFrame {
 			link.sendMessage(s1);
 			msgs[0].setText(s1);
 			rollArray(msgs);
-            for (JLabel msg : msgs)
-				msg.repaint();
 		});
 		closeButton.addActionListener(e -> {
 			link.close();
@@ -218,6 +214,19 @@ public class Screen extends JFrame {
 		chatScreen.add(infoPanel);
 		chatScreen.add(chatPanel);
 		chatScreen.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		Thread recv = new Thread(() -> {
+			String line = null;
+			while ((line = link.recvMessage()) != null) {
+				msgs[0].setText(line);
+				rollArray(msgs);
+				try {
+					Thread.sleep(500);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		});
+		recv.start();
 		return chatScreen;
 
 	}

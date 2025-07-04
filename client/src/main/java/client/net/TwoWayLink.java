@@ -12,37 +12,27 @@ import shared.Logger;
 public class TwoWayLink implements Link {
 
 	private Logger logger = null;
-	private Socket myClient, theirClient;
+	private Socket sock;
 	private ServerSocket server = null;
 	private BufferedReader reader = null;
 	private PrintWriter writer = null;
-	private String recvStr = null;
 
 	public TwoWayLink(String hostname) {
 
 		try {
-			logger = new Logger("logs/twowaylink.log", true);
-			server = new ServerSocket(PORT);
-			Thread t = new Thread(() -> {
-				try {
-					theirClient = server.accept();
-				} catch (IOException io) {
-					System.out.println("EXCEPTION KILL");
-					System.exit(1);
-				}
-			});
-			t.start();
-			myClient = new Socket(hostname, PORT);
+			logger = new Logger("logs/twowaylink.log", false);
 			try {
-				t.join();
-			} catch (InterruptedException e) {
-				System.out.println("EXCEPTION KILL");
-				System.exit(1);
+				sock = new Socket(hostname, PORT);
+			} catch (IOException noConnect) {
+				server = new ServerSocket(PORT);
+				sock = server.accept();
 			}
-			reader = new BufferedReader(new InputStreamReader(theirClient.getInputStream()));
-			writer = new PrintWriter(myClient.getOutputStream());
+			reader = new BufferedReader(new InputStreamReader(sock.getInputStream()));
+			writer = new PrintWriter(sock.getOutputStream());
 			logger.write("TwoWayLink established.");
 		} catch (IOException io) {
+			io.printStackTrace();
+			System.exit(1);
 		}
 
 	}
@@ -60,12 +50,15 @@ public class TwoWayLink implements Link {
 	@Override
 	public String recvMessage() {
 
+		String recvStr = null;
+
 		try {
-			if (reader == null || !reader.ready()) {
+			if (reader == null) {
 				logger.write("Stream is not ready for reading.");
 				return null;
 			}
-			recvStr = reader.readLine();
+			if (reader.readLine().equals(HEADER))
+				recvStr = reader.readLine();
 		} catch (IOException io) {
 			io.printStackTrace();
 		}
@@ -77,10 +70,8 @@ public class TwoWayLink implements Link {
 	public void close() {
 
 		try {
-			if (myClient != null)
-				myClient.close();
-			if (theirClient != null)
-				theirClient.close();
+			if (sock != null)
+				sock.close();
 			if (server != null)
 				server.close();
 			if (reader != null)
@@ -96,7 +87,7 @@ public class TwoWayLink implements Link {
 	@Override
 	public String toString() {
 
-		return myClient.getLocalAddress().toString();
+		return sock.getLocalAddress().toString();
 
 	}
 

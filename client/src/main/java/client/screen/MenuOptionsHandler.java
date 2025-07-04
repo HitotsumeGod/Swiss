@@ -61,7 +61,6 @@ public final class MenuOptionsHandler {
 			else
 				break;
 		}
-		System.out.println(link.toString());
 		logger.write("Connected to associate " + assoc.getName() + " on host " + assoc.getHost() + '.');
 		return link;
 
