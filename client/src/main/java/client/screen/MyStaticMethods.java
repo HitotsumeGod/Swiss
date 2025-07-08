@@ -47,16 +47,7 @@ public final class MyStaticMethods {
 			}
 		if (assoc == null)
 			return null;
-		while (true) {
-			if ((link = new TwoWayLink(assoc.getHost())) == null)
-				try {
-					Thread.sleep(1000);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			else
-				break;
-		}
+		link = new TwoWayLink(assoc.getHost());
 		logger.write("Connected to associate " + assoc.getName() + " on host " + assoc.getHost() + '.');
 		return link;
 

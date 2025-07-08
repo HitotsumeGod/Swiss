@@ -1,8 +1,8 @@
 package client.net;
 
-import java.net.Socket;
-import java.io.OutputStreamWriter;
-import java.io.BufferedWriter;
+import java.net.DatagramSocket;
+import java.net.DatagramPacket;
+import java.net.InetAddress;
 import java.io.IOException;
 import shared.Logger;
 import shared.Link;
@@ -10,38 +10,30 @@ import shared.Link;
 public class OneWayLink implements Link {
 
 	private Logger logger = null;
-	private Socket link = null;
-	private BufferedWriter foucault = null;
+	private DatagramSocket link = null;
+	private DatagramPacket packet = null;
+	private InetAddress hostAddress = null;
 
 	public OneWayLink(String hostname) {
 
 		try {
 			logger = new Logger("logs/onewaylink.log", false);
-			link = new Socket(hostname, PORT);
-			foucault = new BufferedWriter(new OutputStreamWriter(link.getOutputStream()));
+			link = new DatagramSocket(PORT);
+			hostAddress = InetAddress.getByName(hostname);
 		} catch (IOException io) {
 			logger.write("IOException when creating socket.");
 		}
 
 	}
 
-	public boolean checkState() {
-
-		if (logger == null || link == null || foucault == null)
-			return false;
-		return true;
-
-	}
-
 	@Override
 	public boolean sendMessage(String msg) {
 
+		byte[] bbuffer = msg.getBytes();
+
 		try {
-			foucault.write(HEADER, 0, HEADER.length());
-			foucault.write('\n');
-			foucault.write(msg, 0, msg.length());
-			foucault.write('\n');
-			foucault.flush();
+			packet = new DatagramPacket(bbuffer, bbuffer.length, hostAddress, PORT);
+			link.send(packet);
 		} catch (IOException io) {
 			logger.write("IOException when writing to linked host.");
 			return false;
@@ -56,12 +48,7 @@ public class OneWayLink implements Link {
 	@Override
 	public void close() {
 
-		try {
-			foucault.close();
-			link.close();
-		} catch (IOException io) {
-			io.printStackTrace();
-		}
+		link.close();
 
 	}
 

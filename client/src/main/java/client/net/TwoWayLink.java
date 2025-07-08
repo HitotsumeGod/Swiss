@@ -1,36 +1,32 @@
 package client.net;
 
-import java.net.Socket;
-import java.net.ServerSocket;
-import java.io.PrintWriter;
-import java.io.InputStreamReader;
-import java.io.BufferedReader;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.io.IOException;
+import java.util.Arrays;
 import shared.Link;
+import shared.Encrypter;
 import shared.Logger;
+
+import javax.xml.crypto.Data;
 
 public class TwoWayLink implements Link {
 
 	private Logger logger = null;
-	private Socket sock;
-	private ServerSocket server = null;
-	private BufferedReader reader = null;
-	private PrintWriter writer = null;
+	private DatagramPacket send, receive = null;
+	private DatagramSocket link = null;
+	private InetAddress hostAddress = null;
+	private Encrypter crypt = null;
+	private byte[] headerBuffer = new byte[HEADER.getBytes().length];
 
 	public TwoWayLink(String hostname) {
 
 		try {
 			logger = new Logger("logs/twowaylink.log", false);
-			try {
-				sock = new Socket(hostname, PORT);
-				logger.write("Modular nature negotiated; link is SERVER.");
-			} catch (IOException noConnect) {
-				server = new ServerSocket(PORT);
-				sock = server.accept();
-				logger.write("Modular nature negotiated; link is SERVER.");
-			}
-			reader = new BufferedReader(new InputStreamReader(sock.getInputStream()));
-			writer = new PrintWriter(sock.getOutputStream());
+			link = new DatagramSocket(PORT);
+			hostAddress = InetAddress.getByName(hostname);
+			crypt = new Encrypter();
 			logger.write("TwoWayLink established.");
 		} catch (IOException io) {
 			io.printStackTrace();
@@ -39,12 +35,44 @@ public class TwoWayLink implements Link {
 
 	}
 
+	public void sayHello() {
+
+		this.sendMessage("Hi!");
+
+	}
+
+	public boolean checkHello() {
+
+		String hi = "Hi!";
+
+		try {
+			receive = new DatagramPacket(hi.getBytes(), hi.getBytes().length);
+			link.receive(receive);
+			if (new String(receive.getData()).equals(hi))
+				return true;
+		} catch (IOException io) {
+			io.printStackTrace();
+			System.exit(1);
+		}
+		return false;
+
+	}
+
 	@Override
 	public boolean sendMessage(String msg) {
 
-		writer.println(HEADER);
-		writer.println(msg);
-		writer.flush();
+		try {
+			byte[] bbuffer = HEADER.getBytes();
+			send = new DatagramPacket(bbuffer, bbuffer.length, hostAddress, PORT);
+			link.send(send);
+			bbuffer = msg.getBytes();
+			send.setData(bbuffer);
+			send.setLength(bbuffer.length);
+			link.send(send);
+		} catch (IOException io) {
+			io.printStackTrace();
+			System.exit(1);
+		}
 		return true;
 
 	}
@@ -53,14 +81,17 @@ public class TwoWayLink implements Link {
 	public String recvMessage() {
 
 		String recvStr = null;
+		byte[] bbuffer = null;
 
 		try {
-			if (reader == null) {
-				logger.write("Stream is not ready for reading.");
-				return null;
+			receive = new DatagramPacket(headerBuffer, headerBuffer.length);
+			link.receive(receive);
+			if (new String(receive.getData()).equals(HEADER)) {
+				bbuffer = new byte[256];
+				receive = new DatagramPacket(bbuffer, bbuffer.length);
+				link.receive(receive);
+				recvStr = new String(receive.getData());
 			}
-			if (reader.readLine().equals(HEADER))
-				recvStr = reader.readLine();
 		} catch (IOException io) {
 			io.printStackTrace();
 		}
@@ -71,25 +102,16 @@ public class TwoWayLink implements Link {
 	@Override
 	public void close() {
 
-		try {
-			if (sock != null)
-				sock.close();
-			if (server != null)
-				server.close();
-			if (reader != null)
-				reader.close();
-			if (writer != null)
-				writer.close();
-		} catch (IOException io) {
-			io.printStackTrace();
-		}
+		link.close();
 
 	}
+
+	public Encrypter getCrypt() { return crypt; }
 
 	@Override
 	public String toString() {
 
-		return sock.getLocalAddress().toString();
+		return link.getLocalAddress().toString();
 
 	}
 

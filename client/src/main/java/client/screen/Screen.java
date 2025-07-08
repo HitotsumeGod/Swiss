@@ -70,13 +70,8 @@ public class Screen extends JFrame {
 						components.add(inputPanel);
 						components.add(menuScreen);
 						OneWayLink link = MyStaticMethods.initOneWayConnection(s1, assocHandler);
-						if (link.checkState()) {
-							Screen chatScreen = createChatScreen(s1, link, menuScreen);
-							chatScreen.updateScreen();
-						} else {
-							link = null;
-							answerText.setText("ASSOCIATE IS NOT REACHABLE");
-						}
+						Screen chatScreen = createChatScreen(s1, link, menuScreen);
+						chatScreen.updateScreen();
 					});
 					inputPanel.add(new JLabel("Please enter the name of the associate you wish to contact."));
 					inputPanel.add(new JLabel(sb.toString()));
@@ -221,17 +216,15 @@ public class Screen extends JFrame {
 		chatScreen.add(infoPanel);
 		chatScreen.add(chatPanel);
 		chatScreen.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		link.sayHello();
+		link.checkHello();
+		link.sayHello();
 		chatScreen.threadCommand.execute(() -> {
 			String line = null;
-			try {
-				Thread.sleep(500);
-				while ((line = link.recvMessage()) != null) {
-					msgs[0].setText(title + " : " + line);
-					rollArray(msgs);
-					Thread.sleep(500);
-				}
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+			while (true) {
+				line = link.recvMessage();
+				msgs[0].setText(title + " : " + line);
+				rollArray(msgs);
 			}
 		});
 		return chatScreen;
