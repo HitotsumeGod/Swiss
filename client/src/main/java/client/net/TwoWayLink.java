@@ -13,6 +13,7 @@ import javax.xml.crypto.Data;
 
 public class TwoWayLink implements Link {
 
+	private static final String hi = "Hi!";
 	private Logger logger = null;
 	private DatagramPacket send, receive = null;
 	private DatagramSocket link = null;
@@ -37,13 +38,17 @@ public class TwoWayLink implements Link {
 
 	public void sayHello() {
 
-		this.sendMessage("Hi!");
+		try {
+			send = new DatagramPacket(hi.getBytes(), hi.getBytes().length, hostAddress, PORT);
+			link.send(send);
+		} catch (IOException io) {
+			io.printStackTrace();
+			System.exit(1);
+		}
 
 	}
 
 	public boolean checkHello() {
-
-		String hi = "Hi!";
 
 		try {
 			receive = new DatagramPacket(hi.getBytes(), hi.getBytes().length);

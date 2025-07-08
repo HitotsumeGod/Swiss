@@ -216,15 +216,22 @@ public class Screen extends JFrame {
 		chatScreen.add(infoPanel);
 		chatScreen.add(chatPanel);
 		chatScreen.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		link.sayHello();
-		link.checkHello();
-		link.sayHello();
-		chatScreen.threadCommand.execute(() -> {
+		Thread t = new Thread(link::checkHello);
+		t.start();
+		while (t.isAlive())
+			link.sayHello();
+        try {
+            t.join();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        chatScreen.threadCommand.execute(() -> {
 			String line = null;
 			while (true) {
-				line = link.recvMessage();
-				msgs[0].setText(title + " : " + line);
-				rollArray(msgs);
+				if ((line = link.recvMessage()) != null) {
+					msgs[0].setText(title + " : " + line);
+					rollArray(msgs);
+				}
 			}
 		});
 		return chatScreen;
