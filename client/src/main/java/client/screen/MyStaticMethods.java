@@ -3,9 +3,11 @@ package client.screen;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
-import client.net.OneWayLink;
+import java.net.UnknownHostException;
+
 import client.net.TwoWayLink;
 import shared.AssociateHandler;
 import shared.Associate;
@@ -14,25 +16,6 @@ import shared.Logger;
 public final class MyStaticMethods {
 
 	private MyStaticMethods() {}
-
-	public static OneWayLink initOneWayConnection(String opts, AssociateHandler assocHandler) {
-
-		Associate assoc = null;
-		OneWayLink link = null;
-
-		Logger logger = new Logger("logs/menuoptionshandler.log", true);
-		for (Associate a : assocHandler.getAssociates())
-			if (a.getName().equals(opts)) {
-				assoc = a;
-				break;
-			}
-		if (assoc != null)
-			link = new OneWayLink(assoc.getHost());
-		if (link != null)
-			logger.write("Connected to associate " + assoc.getName() + " on host " + assoc.getHost() + '.');
-		return link;
-
-	}
 
 	public static TwoWayLink initTwoWayConnection(String opts, AssociateHandler assocHandler) {
 
@@ -53,11 +36,7 @@ public final class MyStaticMethods {
 
 	}
 
-	public static void performGetUNetID(String opts) {}
-
-	public static void performAddAssociate(String opts) {}
-
-	private static String getMyHostIP() {
+	public static String getMyHostIP() {
 
 		String ret;
 		BufferedReader reader;
@@ -80,5 +59,16 @@ public final class MyStaticMethods {
 		return ret;
 
 	}
+
+	public static String getMyLANIP() {
+
+        try {
+			String address = InetAddress.getLocalHost().toString();
+			return address.substring(address.indexOf("/") + 1);
+        } catch (UnknownHostException e) {
+			throw new RuntimeException(e);
+        }
+
+    }
 
 }

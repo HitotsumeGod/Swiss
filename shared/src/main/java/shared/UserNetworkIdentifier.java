@@ -34,10 +34,8 @@ public final class UserNetworkIdentifier {
 		StringBuilder sb;
 
 		sb = new StringBuilder();
-		for (int i = 0; i < id.length(); i++) {
+		for (int i = 0; i < id.length(); i++)
 			sb.append((int) id.charAt(i));
-			//System.out.println("Char " + id.charAt(i) + " ---> " + (int) id.charAt(i));
-		}
 		return sb.toString();
 
 	}
@@ -53,9 +51,8 @@ public final class UserNetworkIdentifier {
 		for (int i = 0; i < id.UNetID.length(); i += 2) {
 			second.append(id.UNetID.charAt(i));
 			second.append(id.UNetID.charAt(i + 1));
-			sb.append((char) (checking = Integer.valueOf(second.toString())));
+			sb.append((char) (checking = Integer.parseInt(second.toString())));
 			second.setLength(0);
-			//System.out.println("Int " + checking + " ---> " + (char) checking);
 		}
 		return sb.toString();
 

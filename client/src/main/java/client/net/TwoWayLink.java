@@ -4,12 +4,12 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.io.IOException;
+import java.net.SocketException;
+import java.nio.channels.AsynchronousCloseException;
 import java.util.Arrays;
 import shared.Link;
 import shared.Encrypter;
 import shared.Logger;
-
-import javax.xml.crypto.Data;
 
 public class TwoWayLink implements Link {
 
@@ -97,10 +97,10 @@ public class TwoWayLink implements Link {
 				link.receive(receive);
 				recvStr = new String(receive.getData());
 			}
-		} catch (IOException io) {
-			io.printStackTrace();
-		}
-		return recvStr;
+		} catch (AsynchronousCloseException | SocketException e) {} catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return recvStr;
 
 	}
 

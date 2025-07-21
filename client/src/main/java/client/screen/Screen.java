@@ -1,31 +1,41 @@
 package client.screen;
 
+import java.awt.Dimension;
 import java.util.ArrayList;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JLabel;
 import javax.swing.JButton;
+import javax.swing.JScrollPane;
 import javax.swing.JTextField;
+import javax.swing.JTextArea;
 import javax.swing.BoxLayout;
-import javax.swing.SwingConstants;
 import java.awt.Component;
 import java.awt.BorderLayout;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import client.net.OneWayLink;
 import client.net.TwoWayLink;
 import shared.Associate;
 import shared.AssociateHandler;
+import shared.UserNetworkIdentifier;
 
 public class Screen extends JFrame {
 
+	private static final String VERS = "SWISS V1.0";
 	private final Screen previousScreen;
 	private final ExecutorService threadCommand;
+	private JComponent[] buttons;
+	private int[] mutexes;
 
 	private Screen(Screen previousScreen) {
 
 		this.previousScreen = previousScreen;
 		threadCommand = Executors.newCachedThreadPool();
+		buttons = new JComponent[3];
+		mutexes = new int[3];
+		for (int i : mutexes)
+			i = 0;
 
 	}
 
@@ -50,53 +60,37 @@ public class Screen extends JFrame {
 		JButton connectButton = new JButton("CONNECT");
 		JButton getButton = new JButton("GET");
 		JButton addButton = new JButton("ADD");
+
+		menuScreen.buttons[0] = connectButton;
+		menuScreen.buttons[1] = getButton;
+		menuScreen.buttons[2] = addButton;
 		components.add(inputPanel);
 		components.add(menuScreen);
 		inputPanel.setLayout(new BoxLayout(inputPanel, BoxLayout.Y_AXIS));
 		connectButton.addActionListener(e -> {
-			JButton oneWay = new JButton("One-Way");
-			JButton twoWay = new JButton("Two-Way");
-			oneWay.addActionListener(ea -> {
-				if (inputPanel.getComponentCount() == 2) {
+			if (menuScreen.mutexes[0] == 0) {
+				JButton twoWay = new JButton("Two-Way");
+				twoWay.addActionListener(eb -> {
 					JTextField answerText = new JTextField(16);
 					StringBuilder sb = new StringBuilder("<html>");
 					for (Associate a : assocHandler.getAssociates())
-						sb.append(a.getID() + " : " + a.getName() + " ---> " + a.getHost() + "<br>");
-					sb.append("</html>");
-					answerText.addActionListener(eb -> {
-						String s1 = answerText.getText();
-						answerText.setText(null);
-						components.add(answerText);
-						components.add(inputPanel);
-						components.add(menuScreen);
-						OneWayLink link = MyStaticMethods.initOneWayConnection(s1, assocHandler);
-						Screen chatScreen = createChatScreen(s1, link, menuScreen);
-						chatScreen.updateScreen();
-					});
-					inputPanel.add(new JLabel("Please enter the name of the associate you wish to contact."));
-					inputPanel.add(new JLabel(sb.toString()));
-					inputPanel.add(answerText);
-					menuScreen.add(inputPanel);
-					menuScreen.updateScreen();
-				}
-			});
-			twoWay.addActionListener(eb -> {
-				if (inputPanel.getComponentCount() == 2) {
-					JTextField answerText = new JTextField(16);
-					StringBuilder sb = new StringBuilder("<html>");
-					for (Associate a : assocHandler.getAssociates())
-						sb.append(a.getID() + " : " + a.getName() + " ---> " + a.getHost() + "<br>");
+						sb.append(a.getID() + " ----> " + a.getName() + "<br>");
 					sb.append("</html>");
 					answerText.addActionListener(ec -> {
 						String s1 = answerText.getText();
+						assert (s1 != null);
+						if (s1.isEmpty()) {
+							answerText.setText("Please provide a valid associate to contact!");
+							return;
+						}
 						answerText.setText("Waiting for " + s1 + " to connect...");
 						components.add(answerText);
 						components.add(inputPanel);
 						components.add(menuScreen);
 						menuScreen.threadCommand.execute(() -> {
 							TwoWayLink link = MyStaticMethods.initTwoWayConnection(s1, assocHandler);
-							assert (link != null);
 							Screen chatScreen = Screen.createChatScreen(s1, link, menuScreen);
+							answerText.setText(null);
 							chatScreen.updateScreen();
 						});
 					});
@@ -105,31 +99,27 @@ public class Screen extends JFrame {
 					inputPanel.add(answerText);
 					menuScreen.add(inputPanel);
 					menuScreen.updateScreen();
-				}
-			});
-			inputPanel.add(oneWay);
-			inputPanel.add(twoWay);
-			menuScreen.add(inputPanel);
-			menuScreen.updateScreen();
+				});
+				inputPanel.add(twoWay);
+				menuScreen.add(inputPanel);
+				menuScreen.updateScreen();
+				for (int i : menuScreen.mutexes)
+					i = 0;
+				menuScreen.mutexes[0] = 1;
+			}
 		});
 		getButton.addActionListener(ea -> {
-			if (inputPanel.getComponentCount() == 0) {
-				JTextField answerText = new JTextField(16);
-				answerText.addActionListener(eb -> { MyStaticMethods.performGetUNetID(answerText.getText()); });
-				inputPanel.add(answerText);
+			if (menuScreen.mutexes[1] == 0) {
+				JLabel getResult = new JLabel("My UNetID: " + UserNetworkIdentifier.encrypt(MyStaticMethods.getMyLANIP()));
+				inputPanel.add(getResult);
 				menuScreen.add(inputPanel);
 				menuScreen.updateScreen();
+				for (int i : menuScreen.mutexes)
+					i = 0;
+				menuScreen.mutexes[1] = 1;
 			}
 		});
-		addButton.addActionListener(ec -> {
-			if (inputPanel.getComponentCount() == 0) {
-				JTextField answerText = new JTextField(16);
-				answerText.addActionListener(eb -> { MyStaticMethods.performAddAssociate(answerText.getText()); });
-				inputPanel.add(answerText);
-				menuScreen.add(inputPanel);
-				menuScreen.updateScreen();
-			}
-		});
+		addButton.addActionListener(ec -> {});
 		textPanel.add(textLabel);
 		buttonPanel.add(connectButton);
 		buttonPanel.add(getButton);
@@ -137,48 +127,9 @@ public class Screen extends JFrame {
 		menuScreen.setLayout(new BoxLayout(menuScreen.getContentPane(), BoxLayout.Y_AXIS));
 		menuScreen.add(textPanel);
 		menuScreen.add(buttonPanel);
+		menuScreen.setTitle(VERS);
 		menuScreen.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		return menuScreen;
-
-	}
-
-	public static Screen createChatScreen(String title, OneWayLink link, Screen previousScreen) {
-
-		Screen chatScreen = new Screen(previousScreen);
-		JPanel infoPanel = new JPanel();
-		JPanel chatPanel = new JPanel();
-		JLabel screenTitle = new JLabel("Messaging " + title, SwingConstants.LEFT);
-		JLabel[] msgs = new JLabel[15];
-		for (int i = 0; i < msgs.length; i++)
-			msgs[i] = new JLabel();
-		JTextField msgField = new JTextField(16);
-		JButton closeButton = new JButton("DISCONNECT");
-		msgField.addActionListener(e -> {
-			String s1 = msgField.getText();
-			msgField.setText(null);
-			link.sendMessage(s1);
-			msgs[0].setText(s1);
-			rollArray(msgs);
-            for (JLabel msg : msgs)
-				msg.repaint();
-		});
-		closeButton.addActionListener(e -> {
-			link.close();
-			chatScreen.setVisible(false);
-			chatScreen.previousScreen.setVisible(true);
-		});
-		infoPanel.setLayout(new BorderLayout());
-		chatPanel.setLayout(new BoxLayout(chatPanel, BoxLayout.Y_AXIS));
-        for (JLabel l : msgs)
-			chatPanel.add(l);
-		chatPanel.add(msgField);
-		infoPanel.add(screenTitle, BorderLayout.LINE_START);
-		infoPanel.add(closeButton, BorderLayout.EAST);
-		chatScreen.setLayout(new BoxLayout(chatScreen.getContentPane(), BoxLayout.Y_AXIS));
-		chatScreen.add(infoPanel);
-		chatScreen.add(chatPanel);
-		chatScreen.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		return chatScreen;
 
 	}
 
@@ -187,18 +138,16 @@ public class Screen extends JFrame {
 		Screen chatScreen = new Screen(previousScreen);
 		JPanel infoPanel = new JPanel();
 		JPanel chatPanel = new JPanel();
-		JLabel screenTitle = new JLabel("Messaging " + title, SwingConstants.LEFT);
-		JLabel[] msgs = new JLabel[15];
-		for (int i = 0; i < msgs.length; i++)
-			msgs[i] = new JLabel();
+		JPanel msgPanel = new JPanel();
+		JTextArea chat = new JTextArea(5, 15);
+		JScrollPane scroller = new JScrollPane(chat);
 		JTextField msgField = new JTextField(16);
 		JButton closeButton = new JButton("DISCONNECT");
 		msgField.addActionListener(e -> {
 			String s1 = msgField.getText();
 			msgField.setText(null);
+			chat.append("Me: " + s1 + '\n');
 			link.sendMessage(s1);
-			msgs[0].setText(s1);
-			rollArray(msgs);
 		});
 		closeButton.addActionListener(e -> {
 			link.close();
@@ -206,45 +155,42 @@ public class Screen extends JFrame {
 			chatScreen.previousScreen.setVisible(true);
 		});
 		infoPanel.setLayout(new BorderLayout());
-		chatPanel.setLayout(new BoxLayout(chatPanel, BoxLayout.Y_AXIS));
-		for (JLabel l : msgs)
-			chatPanel.add(l);
-		chatPanel.add(msgField);
-		infoPanel.add(screenTitle, BorderLayout.LINE_START);
 		infoPanel.add(closeButton, BorderLayout.EAST);
-		chatScreen.setLayout(new BoxLayout(chatScreen.getContentPane(), BoxLayout.Y_AXIS));
-		chatScreen.add(infoPanel);
-		chatScreen.add(chatPanel);
+		chatPanel.setLayout(new BoxLayout(chatPanel, BoxLayout.X_AXIS));
+		msgPanel.add(msgField);
+		chatPanel.add(scroller);
+		chatScreen.setLayout(new BorderLayout(5, 5));
+		chatScreen.add(infoPanel, BorderLayout.NORTH);
+		chatScreen.add(chatPanel, BorderLayout.CENTER);
+		chatScreen.add(msgPanel, BorderLayout.SOUTH);
+		chatScreen.setTitle("Messaging " + title);
 		chatScreen.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		chatScreen.setPreferredSize(new Dimension(450, 250));
 		Thread t = new Thread(link::checkHello);
+		//negotiate connection
 		t.start();
-		while (t.isAlive())
-			link.sayHello();
-        try {
-            t.join();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+		try {
+			while (t.isAlive())
+				link.sayHello();
+			t.join();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+		//
         chatScreen.threadCommand.execute(() -> {
 			String line = null;
 			while (true) {
 				if ((line = link.recvMessage()) != null) {
-					msgs[0].setText(title + " : " + line);
-					rollArray(msgs);
+					chat.append(title + ": " + line + '\n');
+				} else {
+					link.close();
+					chatScreen.setVisible(false);
+					chatScreen.previousScreen.setVisible(true);
 				}
 			}
 		});
 		return chatScreen;
-
-	}
-
-	private static void rollArray(Object[] arr) {
-
-		Object[] temp = arr.clone();
-
-		for (int i = 1; i < arr.length; i++)
-			arr[i] = temp[i - 1];
-		arr[0] = temp[temp.length - 1];
 
 	}
 
