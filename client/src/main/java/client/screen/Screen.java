@@ -1,6 +1,8 @@
 package client.screen;
 
 import java.awt.Dimension;
+import java.net.DatagramSocket;
+import java.net.SocketException;
 import java.util.ArrayList;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
@@ -15,6 +17,8 @@ import java.awt.Component;
 import java.awt.BorderLayout;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import client.net.HolePuncher;
 import client.net.TwoWayLink;
 import shared.Associate;
 import shared.AssociateHandler;
@@ -22,20 +26,14 @@ import shared.UserNetworkIdentifier;
 
 public class Screen extends JFrame {
 
-	private static final String VERS = "SWISS V1.0";
+	private static final String VERS = "SWISS V1.1E";
 	private final Screen previousScreen;
 	private final ExecutorService threadCommand;
-	private JComponent[] buttons;
-	private int[] mutexes;
 
 	private Screen(Screen previousScreen) {
 
 		this.previousScreen = previousScreen;
 		threadCommand = Executors.newCachedThreadPool();
-		buttons = new JComponent[3];
-		mutexes = new int[3];
-		for (int i : mutexes)
-			i = 0;
 
 	}
 
@@ -60,64 +58,58 @@ public class Screen extends JFrame {
 		JButton connectButton = new JButton("CONNECT");
 		JButton getButton = new JButton("GET");
 		JButton addButton = new JButton("ADD");
+		DatagramSocket socket;
 
-		menuScreen.buttons[0] = connectButton;
-		menuScreen.buttons[1] = getButton;
-		menuScreen.buttons[2] = addButton;
+		try {
+			socket = new DatagramSocket();
+		} catch (SocketException e) {
+			throw new RuntimeException(e);
+		}
 		components.add(inputPanel);
 		components.add(menuScreen);
 		inputPanel.setLayout(new BoxLayout(inputPanel, BoxLayout.Y_AXIS));
 		connectButton.addActionListener(e -> {
-			if (menuScreen.mutexes[0] == 0) {
-				JButton twoWay = new JButton("Two-Way");
-				twoWay.addActionListener(eb -> {
-					JTextField answerText = new JTextField(16);
-					StringBuilder sb = new StringBuilder("<html>");
-					for (Associate a : assocHandler.getAssociates())
-						sb.append(a.getID() + " ----> " + a.getName() + "<br>");
-					sb.append("</html>");
-					answerText.addActionListener(ec -> {
-						String s1 = answerText.getText();
-						assert (s1 != null);
-						if (s1.isEmpty()) {
-							answerText.setText("Please provide a valid associate to contact!");
-							return;
-						}
-						answerText.setText("Waiting for " + s1 + " to connect...");
-						components.add(answerText);
-						components.add(inputPanel);
-						components.add(menuScreen);
-						menuScreen.threadCommand.execute(() -> {
-							TwoWayLink link = MyStaticMethods.initTwoWayConnection(s1, assocHandler);
-							Screen chatScreen = Screen.createChatScreen(s1, link, menuScreen);
-							answerText.setText(null);
-							chatScreen.updateScreen();
-						});
+			JButton twoWay = new JButton("Two-Way");
+			twoWay.addActionListener(eb -> {
+				JTextField answerText = new JTextField(16);
+				StringBuilder sb = new StringBuilder("<html>");
+				for (Associate a : assocHandler.getAssociates())
+					sb.append(a.getID() + " ----> " + a.getName() + "<br>");
+				sb.append("</html>");
+				answerText.addActionListener(ec -> {
+					String s1 = answerText.getText();
+					assert (s1 != null);
+					if (s1.isEmpty()) {
+						answerText.setText("Please provide a valid associate to contact!");
+						return;
+					}
+					answerText.setText("Waiting for " + s1 + " to connect...");
+					components.add(answerText);
+					components.add(inputPanel);
+					components.add(menuScreen);
+					menuScreen.threadCommand.execute(() -> {
+						TwoWayLink link = MyStaticMethods.initTwoWayConnection(s1, assocHandler);
+						Screen chatScreen = Screen.createChatScreen(s1, link, menuScreen);
+						answerText.setText(null);
+						chatScreen.updateScreen();
 					});
-					inputPanel.add(new JLabel("Please enter the name of the associate you wish to contact."));
-					inputPanel.add(new JLabel(sb.toString()));
-					inputPanel.add(answerText);
-					menuScreen.add(inputPanel);
-					menuScreen.updateScreen();
 				});
-				inputPanel.add(twoWay);
+				inputPanel.add(new JLabel("Please enter the name of the associate you wish to contact."));
+				inputPanel.add(new JLabel(sb.toString()));
+				inputPanel.add(answerText);
 				menuScreen.add(inputPanel);
 				menuScreen.updateScreen();
-				for (int i : menuScreen.mutexes)
-					i = 0;
-				menuScreen.mutexes[0] = 1;
-			}
+			});
+			inputPanel.add(twoWay);
+			menuScreen.add(inputPanel);
+			menuScreen.updateScreen();
 		});
 		getButton.addActionListener(ea -> {
-			if (menuScreen.mutexes[1] == 0) {
-				JLabel getResult = new JLabel("My UNetID: " + UserNetworkIdentifier.encrypt(MyStaticMethods.getMyLANIP()));
-				inputPanel.add(getResult);
-				menuScreen.add(inputPanel);
-				menuScreen.updateScreen();
-				for (int i : menuScreen.mutexes)
-					i = 0;
-				menuScreen.mutexes[1] = 1;
-			}
+            HolePuncher.getSTUN(socket);
+            JLabel getResult = new JLabel("My UNetID: " + UserNetworkIdentifier.encrypt(MyStaticMethods.getMyLANIP()));
+			inputPanel.add(getResult);
+			menuScreen.add(inputPanel);
+			menuScreen.updateScreen();
 		});
 		addButton.addActionListener(ec -> {});
 		textPanel.add(textLabel);

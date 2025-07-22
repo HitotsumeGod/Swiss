@@ -7,47 +7,8 @@ public class Encrypter {
 
     public Encrypter() {
 
-        /*LocalTime ts = LocalTime.now();
-        if (ts.getNano() % 2 == 0) {
-            seed = 1520384710293847501L;
-            code = 2;
-        } else if (ts.getNano() % 3 == 0) {
-            seed = 2738194032183409187L;
-            code = 3;
-        } else if (ts.getNano() % 5 == 0) {
-            seed = 904182731092837465L;
-            code = 5;
-        } else if (ts.getNano() % 7 == 0) {
-            seed = 6283918273645093812L;
-            code = 7;
-        } else {
-            seed = 1328491738491273847L;
-            code = 1;
-        }*/
         seed = 2;
         code = 3;
-
-    }
-
-    public Encrypter(short seedCode) {
-
-        code = seedCode;
-        switch (seedCode) {
-            case 2:
-                seed = 1520384710293847501L;
-                break;
-            case 3:
-                seed = 2738194032183409187L;
-                break;
-            case 5:
-                seed = 904182731092837465L;
-                break;
-            case 7:
-                seed = 6283918273645093812L;
-                break;
-            default:
-                seed = 1328491738491273847L;
-        }
 
     }
 

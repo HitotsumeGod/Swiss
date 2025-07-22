@@ -36,6 +36,20 @@ public class TwoWayLink implements Link {
 
 	}
 
+	public TwoWayLink(String hostname, DatagramSocket link) {
+
+		try {
+			logger = new Logger("logs/twowaylink.log", false);
+			hostAddress = InetAddress.getByName(hostname);
+			crypt = new Encrypter();
+			logger.write("TwoWayLink established.");
+		} catch (IOException io) {
+			io.printStackTrace();
+			System.exit(1);
+		}
+
+	}
+
 	public void sayHello() {
 
 		try {

@@ -3,11 +3,11 @@ package client.screen;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
-
 import client.net.TwoWayLink;
 import shared.AssociateHandler;
 import shared.Associate;
@@ -31,6 +31,25 @@ public final class MyStaticMethods {
 		if (assoc == null)
 			return null;
 		link = new TwoWayLink(assoc.getHost());
+		logger.write("Connected to associate " + assoc.getName() + " on host " + assoc.getHost() + '.');
+		return link;
+
+	}
+
+	public static TwoWayLink initTwoWayConnection(String opts, AssociateHandler assocHandler, DatagramSocket socket) {
+
+		Associate assoc = null;
+		TwoWayLink link = null;
+
+		Logger logger = new Logger("logs/menuoptionshandler.log", false);
+		for (Associate a : assocHandler.getAssociates())
+			if (a.getName().equals(opts)) {
+				assoc = a;
+				break;
+			}
+		if (assoc == null)
+			return null;
+		link = new TwoWayLink(assoc.getHost(), socket);
 		logger.write("Connected to associate " + assoc.getName() + " on host " + assoc.getHost() + '.');
 		return link;
 
