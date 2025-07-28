@@ -105,7 +105,9 @@ public class Screen extends JFrame {
 			menuScreen.updateScreen();
 		});
 		getButton.addActionListener(ea -> {
-            HolePuncher.getSTUN(socket);
+            String[] sus = HolePuncher.getSTUN(socket);
+			for (String s : sus)
+				System.out.println(s);
             JLabel getResult = new JLabel("My UNetID: " + UserNetworkIdentifier.encrypt(MyStaticMethods.getMyLANIP()));
 			inputPanel.add(getResult);
 			menuScreen.add(inputPanel);

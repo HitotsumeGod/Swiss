@@ -13,13 +13,10 @@ public class HolePuncher {
 
     private static final int PORT = 23892;
     private static final int STUNPORT = 19302; //3478;
+    private static final int STUNHDRLEN = 20;
+    private static final int[] MAGICCOOKIE = { 0x21, 0x12, 0xA4, 0x42 };
     private static final String[]  stunServers = new String[] {
             "stun.l.google.com",
-            "stun.ideasip.com",
-            "stun.voiparound.com",
-            "stun.voipbuster.com",
-            "stun.voipstunt.com",
-            "stun.voxgratia.org"
     };
 
     private HolePuncher() {}
@@ -110,7 +107,7 @@ public class HolePuncher {
         try {
             socket = new DatagramSocket();
         } catch (SocketException e) {
-            throw new RuntimeException(e);
+       	    throw new RuntimeException(e);
         }
         if (amount > 0) {
             for (int i = 0; i < amount; i++) {
@@ -178,7 +175,11 @@ public class HolePuncher {
         byte[] transID = new byte[12];
         byte[] message = null;
         byte[] response = new byte[256];
-        int which = 0;
+        byte[] translatedPort = new byte[2], translatedAddress = new byte[4];
+        int which = 0, responseLength = 0;
+        int asciiPort = 0;
+        String[] asciiAddress = new String[4];
+        StringBuilder trueAddress = new StringBuilder();
 
         //construct STUN request
         new SecureRandom().nextBytes(transID);
@@ -214,7 +215,26 @@ public class HolePuncher {
             break;
         }
         //check and format response
-        res[0] = Arrays.toString(response);
+        if (response[0] != 0x01 || response[1] != 0x01)
+            throw new RuntimeException("STUN Server sent unknown message!");
+        responseLength = response[STUNHDRLEN + 2] << 8;
+        responseLength |= response[STUNHDRLEN + 3];
+        response = Arrays.copyOfRange(response, STUNHDRLEN + 4, STUNHDRLEN + 4 + responseLength);
+        //parse XORed port
+        translatedPort[0] = (byte) (response[2] ^ MAGICCOOKIE[0]);
+        translatedPort[1] = (byte) (response[3] ^ MAGICCOOKIE[1]);
+        //parse XORed address
+        for (int i = 0; i < translatedAddress.length; i++)
+            translatedAddress[i] = (byte) (response[i + 4] ^ MAGICCOOKIE[i]);
+        asciiPort = ((translatedPort[0] & 0xFF) << 8) | (translatedPort[1] & 0xFF);
+        for (int i = 0; i < asciiAddress.length; i++) {
+            asciiAddress[i] = Integer.toString(translatedAddress[i] & 0xFF);
+            trueAddress.append(asciiAddress[i]);
+            trueAddress.append('.');
+        }
+        trueAddress.deleteCharAt(trueAddress.length() - 1);
+        res[0] = Integer.toString(asciiPort);
+        res[1] = trueAddress.toString();
         return res;
 
     }
