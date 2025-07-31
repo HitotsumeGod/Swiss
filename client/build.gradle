@@ -18,7 +18,6 @@ repositories {
 dependencies {
     // This dependency is used by the application.
     implementation libs.guava
-    implementation project(':shared')
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
@@ -39,22 +38,4 @@ jar {
 application {
     // Define the main class for the application.
     mainClass = 'client.Pilot'
-}
-
-tasks.register('mkdirs') {
-    mkdir 'build/empty/data'
-    mkdir 'build/empty/logs'
-}
-
-tasks.named('distZip').configure {
-    dependsOn.tasks.mkdirs
-}
-
-tasks.named('distTar').configure {
-    dependsOn.tasks.mkdirs
-}
-
-tasks.named('test') {
-    // Use JUnit Platform for unit tests.
-    useJUnitPlatform()
 }

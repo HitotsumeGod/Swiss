@@ -1,12 +1,22 @@
-package shared;
+package client.util;
 
 public final class UserNetworkIdentifier {
 
-	String UNetID;
+	private final String UNetID;
 
-	public UserNetworkIdentifier(String id) {
+	public UserNetworkIdentifier(String address, String port) {
 
-		UNetID = UserNetworkIdentifier.encrypt(id);
+		StringBuilder sb = new StringBuilder();
+		sb.append(address);
+		sb.append(':');
+		sb.append(port);
+		UNetID = UserNetworkIdentifier.encrypt(sb.toString());
+
+	}
+
+	public UserNetworkIdentifier(String UNetID) {
+
+		this.UNetID = UNetID;
 
 	}
 
@@ -31,9 +41,9 @@ public final class UserNetworkIdentifier {
 
 	public static String encrypt(String id) {
 
-		StringBuilder sb;
 
-		sb = new StringBuilder();
+		assert(!id.isEmpty());
+		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < id.length(); i++)
 			sb.append((int) id.charAt(i));
 		return sb.toString();
@@ -42,16 +52,13 @@ public final class UserNetworkIdentifier {
 
 	public static String decrypt(UserNetworkIdentifier id) {
 
-		StringBuilder sb, second;
-		String sus;
-		int checking;
-
-		sb = new StringBuilder();
-		second = new StringBuilder();
+		assert(id != null);
+		StringBuilder sb = new StringBuilder();
+		StringBuilder second = new StringBuilder();
 		for (int i = 0; i < id.UNetID.length(); i += 2) {
 			second.append(id.UNetID.charAt(i));
 			second.append(id.UNetID.charAt(i + 1));
-			sb.append((char) (checking = Integer.parseInt(second.toString())));
+			sb.append((char) Integer.parseInt(second.toString()));
 			second.setLength(0);
 		}
 		return sb.toString();

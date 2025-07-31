@@ -6,10 +6,9 @@ import java.net.InetAddress;
 import java.io.IOException;
 import java.net.SocketException;
 import java.nio.channels.AsynchronousCloseException;
-import java.util.Arrays;
-import shared.Link;
-import shared.Encrypter;
-import shared.Logger;
+import client.util.Encrypter;
+import client.util.Logger;
+import client.util.UserNetworkIdentifier;
 
 public class TwoWayLink implements Link {
 
@@ -18,16 +17,18 @@ public class TwoWayLink implements Link {
 	private DatagramPacket send, receive = null;
 	private DatagramSocket link = null;
 	private InetAddress hostAddress = null;
+	private int hostPort = 0;
 	private Encrypter crypt = null;
 	private byte[] headerBuffer = new byte[HEADER.getBytes().length];
 
-	public TwoWayLink(String hostname) {
+	public TwoWayLink(UserNetworkIdentifier id, DatagramSocket link) {
 
 		try {
 			logger = new Logger("logs/twowaylink.log", false);
-			link = new DatagramSocket(PORT);
-			hostAddress = InetAddress.getByName(hostname);
-			crypt = new Encrypter();
+			String s1 = UserNetworkIdentifier.decrypt(id);
+			hostAddress = InetAddress.getByName(s1.substring(0, s1.indexOf(':')));
+			hostPort = Integer.parseInt(s1.substring(s1.indexOf(':') + 1));
+			this.link = link;
 			logger.write("TwoWayLink established.");
 		} catch (IOException io) {
 			io.printStackTrace();
@@ -36,28 +37,25 @@ public class TwoWayLink implements Link {
 
 	}
 
-	public TwoWayLink(String hostname, DatagramSocket link) {
+	public InetAddress getHostAddress() {
 
-		try {
-			logger = new Logger("logs/twowaylink.log", false);
-			hostAddress = InetAddress.getByName(hostname);
-			crypt = new Encrypter();
-			logger.write("TwoWayLink established.");
-		} catch (IOException io) {
-			io.printStackTrace();
-			System.exit(1);
-		}
+		return hostAddress;
+
+	}
+
+	public int getHostPort() {
+
+		return hostPort;
 
 	}
 
 	public void sayHello() {
 
 		try {
-			send = new DatagramPacket(hi.getBytes(), hi.getBytes().length, hostAddress, PORT);
+			send = new DatagramPacket(hi.getBytes(), hi.getBytes().length, hostAddress, hostPort);
 			link.send(send);
 		} catch (IOException io) {
-			io.printStackTrace();
-			System.exit(1);
+			throw new RuntimeException(io);
 		}
 
 	}
@@ -82,7 +80,7 @@ public class TwoWayLink implements Link {
 
 		try {
 			byte[] bbuffer = HEADER.getBytes();
-			send = new DatagramPacket(bbuffer, bbuffer.length, hostAddress, PORT);
+			send = new DatagramPacket(bbuffer, bbuffer.length, hostAddress, hostPort);
 			link.send(send);
 			bbuffer = msg.getBytes();
 			send.setData(bbuffer);

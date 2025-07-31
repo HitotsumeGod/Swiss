@@ -4,7 +4,6 @@ import java.awt.Dimension;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.util.ArrayList;
-import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JLabel;
@@ -17,16 +16,12 @@ import java.awt.Component;
 import java.awt.BorderLayout;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import client.net.HolePuncher;
 import client.net.TwoWayLink;
-import shared.Associate;
-import shared.AssociateHandler;
-import shared.UserNetworkIdentifier;
+import client.util.UserNetworkIdentifier;
 
 public class Screen extends JFrame {
 
-	private static final String VERS = "SWISS V1.1E";
+	private static final String VERS = "SWISS V1.2E";
 	private final Screen previousScreen;
 	private final ExecutorService threadCommand;
 
@@ -49,7 +44,6 @@ public class Screen extends JFrame {
 	public static Screen createMenuScreen(Screen previousScreen) {
 
 		ArrayList<Component> components = new ArrayList<>();
-		AssociateHandler assocHandler = new AssociateHandler();
 		Screen menuScreen = new Screen(previousScreen);
 		JPanel textPanel = new JPanel();
 		JPanel buttonPanel = new JPanel();
@@ -57,7 +51,6 @@ public class Screen extends JFrame {
 		JLabel textLabel = new JLabel("Welcome to Swiss!");
 		JButton connectButton = new JButton("CONNECT");
 		JButton getButton = new JButton("GET");
-		JButton addButton = new JButton("ADD");
 		DatagramSocket socket;
 
 		try {
@@ -69,60 +62,69 @@ public class Screen extends JFrame {
 		components.add(menuScreen);
 		inputPanel.setLayout(new BoxLayout(inputPanel, BoxLayout.Y_AXIS));
 		connectButton.addActionListener(e -> {
-			JButton twoWay = new JButton("Two-Way");
-			twoWay.addActionListener(eb -> {
-				JTextField answerText = new JTextField(16);
-				StringBuilder sb = new StringBuilder("<html>");
-				for (Associate a : assocHandler.getAssociates())
-					sb.append(a.getID() + " ----> " + a.getName() + "<br>");
-				sb.append("</html>");
-				answerText.addActionListener(ec -> {
-					String s1 = answerText.getText();
-					assert (s1 != null);
-					if (s1.isEmpty()) {
-						answerText.setText("Please provide a valid associate to contact!");
-						return;
-					}
-					answerText.setText("Waiting for " + s1 + " to connect...");
-					components.add(answerText);
-					components.add(inputPanel);
-					components.add(menuScreen);
-					menuScreen.threadCommand.execute(() -> {
-						TwoWayLink link = MyStaticMethods.initTwoWayConnection(s1, assocHandler);
-						Screen chatScreen = Screen.createChatScreen(s1, link, menuScreen);
-						answerText.setText(null);
-						chatScreen.updateScreen();
-					});
+			inputPanel.removeAll();
+			menuScreen.updateScreen();
+			JTextArea idField = new JTextArea(1, 16);
+			idField.setText("Your UNetID is : ");
+			String s = MyStaticMethods.getSTUN(socket).toString();
+			idField.append(s);
+			System.out.println(s);
+			idField.setEditable(false);
+			JTextField answerText = new JTextField(16);
+			answerText.addActionListener(eb -> {
+				String s1 = answerText.getText();
+				assert (s1 != null);
+				if (s1.isEmpty()) {
+					answerText.setText("Please provide a valid associate to contact!");
+					return;
+				}
+				answerText.setText("Waiting for associate to connect...");
+				components.add(answerText);
+				components.add(inputPanel);
+				components.add(menuScreen);
+				menuScreen.threadCommand.execute(() -> {
+					TwoWayLink link = new TwoWayLink(new UserNetworkIdentifier(s1), socket);
+					Screen chatScreen = Screen.createChatScreen(s1, link, menuScreen);
+					answerText.setText(null);
+					chatScreen.updateScreen();
 				});
-				inputPanel.add(new JLabel("Please enter the name of the associate you wish to contact."));
-				inputPanel.add(new JLabel(sb.toString()));
-				inputPanel.add(answerText);
-				menuScreen.add(inputPanel);
-				menuScreen.updateScreen();
 			});
-			inputPanel.add(twoWay);
+			inputPanel.add(new JLabel("Please enter an associate's UNetID."));
+			inputPanel.add(idField);
+			inputPanel.add(answerText);
 			menuScreen.add(inputPanel);
 			menuScreen.updateScreen();
 		});
 		getButton.addActionListener(ea -> {
-            String[] sus = HolePuncher.getSTUN(socket);
-			for (String s : sus)
-				System.out.println(s);
-            JLabel getResult = new JLabel("My UNetID: " + UserNetworkIdentifier.encrypt(MyStaticMethods.getMyLANIP()));
-			inputPanel.add(getResult);
+			inputPanel.removeAll();
+			JLabel label = new JLabel("Please enter an IPV4 ip:port combination such as '10.10.10.10:8080");
+			JTextField answerText = new JTextField(16);
+			JTextArea translatedText = new JTextArea(1, 16);
+			translatedText.setEditable(false);
+			answerText.addActionListener(eb -> {
+				String s1 = answerText.getText();
+				if (!s1.contains(":"))
+					answerText.setText("ip:port string malformed!");
+				else {
+					translatedText.setText("UNetID : ");
+					translatedText.append(UserNetworkIdentifier.encrypt(s1));
+				}
+			});
+			inputPanel.add(label);
+			inputPanel.add(answerText);
+			inputPanel.add(translatedText);
 			menuScreen.add(inputPanel);
 			menuScreen.updateScreen();
 		});
-		addButton.addActionListener(ec -> {});
 		textPanel.add(textLabel);
 		buttonPanel.add(connectButton);
 		buttonPanel.add(getButton);
-		buttonPanel.add(addButton);
 		menuScreen.setLayout(new BoxLayout(menuScreen.getContentPane(), BoxLayout.Y_AXIS));
 		menuScreen.add(textPanel);
 		menuScreen.add(buttonPanel);
 		menuScreen.setTitle(VERS);
 		menuScreen.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		menuScreen.setPreferredSize(new Dimension(750, 500));
 		return menuScreen;
 
 	}
@@ -137,6 +139,7 @@ public class Screen extends JFrame {
 		JScrollPane scroller = new JScrollPane(chat);
 		JTextField msgField = new JTextField(16);
 		JButton closeButton = new JButton("DISCONNECT");
+
 		msgField.addActionListener(e -> {
 			String s1 = msgField.getText();
 			msgField.setText(null);

@@ -1,4 +1,4 @@
-package shared;
+package client.util;
 
 import java.io.File;
 import java.io.FileWriter;

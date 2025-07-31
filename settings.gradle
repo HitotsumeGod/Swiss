@@ -11,4 +11,4 @@ plugins {
 }
 
 rootProject.name = 'Swiss'
-include('client', 'daemon', 'shared')
+include('client')
