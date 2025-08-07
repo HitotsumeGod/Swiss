@@ -1,21 +1,18 @@
 package client.screen;
 
 import java.util.Arrays;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.security.SecureRandom;
 import client.util.UserNetworkIdentifier;
 import client.util.Logger;
 
-public final class MyStaticMethods {
+public final class BroadNetworking {
 
+	public static final int BINDPORT = 13692;
 	private static final int PORT = 23892;
 	private static final int STUNPORT = 19302;
 	private static final int STUNHDRLEN = 20;
@@ -24,7 +21,7 @@ public final class MyStaticMethods {
 			"stun.l.google.com",
 	};
 
-	private MyStaticMethods() {}
+	private BroadNetworking() {}
 
 	public static UserNetworkIdentifier getSTUN(DatagramSocket socket) {
 
@@ -58,7 +55,6 @@ public final class MyStaticMethods {
 			message[il] = firstHalf[il];
 		for (; il < transID.length; il++)
 			message[il] = transID[il];
-
 		responsePacket = new DatagramPacket(response, 0, response.length);
 		//loop until we get a usable stun server, then test received packet identity
 		while (true) {
@@ -66,9 +62,10 @@ public final class MyStaticMethods {
 				messagePacket = new DatagramPacket(message, 0, message.length, InetAddress.getByName(stunServers[which]), STUNPORT);
 				socket.send(messagePacket);
 				socket.receive(responsePacket);
+				lincoln.write("Usable STUN server identified.");
 			} catch (IOException io) {
 				if (which == stunServers.length - 1) {
-					lincoln.write("No usable STUN server found.");
+					lincoln.write("No usable STUN server identified.");
 					return null;
 				} else
 					++which;
@@ -77,8 +74,10 @@ public final class MyStaticMethods {
 			if (response[0] != 0x01 || response[1] != 0x01) {
 				lincoln.write("Received improper response from STUN server.");
 				++which;
-			} else
+			} else {
+				lincoln.write("Received proper binding response from STUN server.");
 				break;
+			}
 		}
 		//format response
 		responseLength = response[STUNHDRLEN + 2] << 8;
@@ -97,31 +96,13 @@ public final class MyStaticMethods {
 			trueAddress.append('.');
 		}
 		trueAddress.deleteCharAt(trueAddress.length() - 1);
+		StringBuilder sb = new StringBuilder("STUN ip:port pair acquired: ");
+		sb.append(trueAddress.toString());
+		sb.append(':');
+		sb.append(asciiPort);
+		sb.append('.');
+		lincoln.write(sb.toString());
 		return new UserNetworkIdentifier(trueAddress.toString(), Integer.toString(asciiPort));
-
-	}
-
-	public static String getMyHostIP() {
-
-		String ret;
-		BufferedReader reader;
-		URI uri;
-
-		ret = null;
-		uri = null;
-		try {
-			uri = new URI("http://ipecho.net/plain");
-		} catch (URISyntaxException e) {
-			e.printStackTrace();
-		}
-		try {
-			reader = new BufferedReader(new InputStreamReader(uri.toURL().openStream()));
-			ret = reader.readLine();
-			reader.close();
-		} catch (IOException io) {
-			io.printStackTrace();
-		}
-		return ret;
 
 	}
 

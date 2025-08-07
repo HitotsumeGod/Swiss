@@ -42,7 +42,6 @@ public final class UserNetworkIdentifier {
 	public static String encrypt(String id) {
 
 
-		assert(!id.isEmpty());
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < id.length(); i++)
 			sb.append((int) id.charAt(i));
@@ -52,7 +51,6 @@ public final class UserNetworkIdentifier {
 
 	public static String decrypt(UserNetworkIdentifier id) {
 
-		assert(id != null);
 		StringBuilder sb = new StringBuilder();
 		StringBuilder second = new StringBuilder();
 		for (int i = 0; i < id.UNetID.length(); i += 2) {

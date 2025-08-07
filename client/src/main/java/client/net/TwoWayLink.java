@@ -29,7 +29,12 @@ public class TwoWayLink implements Link {
 			hostAddress = InetAddress.getByName(s1.substring(0, s1.indexOf(':')));
 			hostPort = Integer.parseInt(s1.substring(s1.indexOf(':') + 1));
 			this.link = link;
-			logger.write("TwoWayLink established.");
+			StringBuilder sb = new StringBuilder("TwoWayLink established with ");
+			sb.append(hostAddress.toString());
+			sb.append(':');
+			sb.append(hostPort);
+			sb.append('.');
+			logger.write(sb.toString());
 		} catch (IOException io) {
 			io.printStackTrace();
 			System.exit(1);
@@ -65,11 +70,13 @@ public class TwoWayLink implements Link {
 		try {
 			receive = new DatagramPacket(hi.getBytes(), hi.getBytes().length);
 			link.receive(receive);
-			if (new String(receive.getData()).equals(hi))
+			if (new String(receive.getData()).equals(hi)) {
+				logger.write("Accepted associate hello.");
 				return true;
+			}
+			logger.write("Rejected unknown message.");
 		} catch (IOException io) {
-			io.printStackTrace();
-			System.exit(1);
+			throw new RuntimeException(io);
 		}
 		return false;
 
@@ -90,6 +97,7 @@ public class TwoWayLink implements Link {
 			io.printStackTrace();
 			System.exit(1);
 		}
+		logger.write("Sent Swiss message to associate.");
 		return true;
 
 	}
@@ -112,6 +120,7 @@ public class TwoWayLink implements Link {
 		} catch (AsynchronousCloseException | SocketException e) {} catch (IOException e) {
             throw new RuntimeException(e);
         }
+		logger.write("Received Swiss message from associate.");
         return recvStr;
 
 	}
@@ -120,6 +129,7 @@ public class TwoWayLink implements Link {
 	public void close() {
 
 		link.close();
+		logger.write("Closed TwoWayLink.");
 
 	}
 

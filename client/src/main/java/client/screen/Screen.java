@@ -17,6 +17,7 @@ import java.awt.BorderLayout;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import client.net.TwoWayLink;
+import client.util.Logger;
 import client.util.UserNetworkIdentifier;
 
 public class Screen extends JFrame {
@@ -24,11 +25,22 @@ public class Screen extends JFrame {
 	private static final String VERS = "SWISS V1.2E";
 	private final Screen previousScreen;
 	private final ExecutorService threadCommand;
+	private final Logger lincoln;
 
 	private Screen(Screen previousScreen) {
 
 		this.previousScreen = previousScreen;
 		threadCommand = Executors.newCachedThreadPool();
+		String logpath = null;
+		if (previousScreen == null)
+			logpath = new String("logs/screen.log");
+		else {
+			StringBuilder sb = new StringBuilder("logs/");
+			sb.append(previousScreen.getTitle());
+			sb.append("_screen.log");
+			logpath = sb.toString();
+		}
+		lincoln = new Logger(logpath, false);
 
 	}
 
@@ -54,7 +66,7 @@ public class Screen extends JFrame {
 		DatagramSocket socket;
 
 		try {
-			socket = new DatagramSocket();
+			socket = new DatagramSocket(BroadNetworking.BINDPORT);
 		} catch (SocketException e) {
 			throw new RuntimeException(e);
 		}
@@ -66,7 +78,7 @@ public class Screen extends JFrame {
 			menuScreen.updateScreen();
 			JTextArea idField = new JTextArea(1, 16);
 			idField.setText("Your UNetID is : ");
-			String s = MyStaticMethods.getSTUN(socket).toString();
+			String s = BroadNetworking.getSTUN(socket).toString();
 			idField.append(s);
 			System.out.println(s);
 			idField.setEditable(false);
@@ -94,6 +106,7 @@ public class Screen extends JFrame {
 			inputPanel.add(answerText);
 			menuScreen.add(inputPanel);
 			menuScreen.updateScreen();
+			menuScreen.lincoln.write("connectButton logic completed.");
 		});
 		getButton.addActionListener(ea -> {
 			inputPanel.removeAll();
@@ -115,6 +128,7 @@ public class Screen extends JFrame {
 			inputPanel.add(translatedText);
 			menuScreen.add(inputPanel);
 			menuScreen.updateScreen();
+			menuScreen.lincoln.write("getButton logic completed.");
 		});
 		textPanel.add(textLabel);
 		buttonPanel.add(connectButton);
@@ -125,6 +139,7 @@ public class Screen extends JFrame {
 		menuScreen.setTitle(VERS);
 		menuScreen.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		menuScreen.setPreferredSize(new Dimension(750, 500));
+		menuScreen.lincoln.write("New menuScreen established.");
 		return menuScreen;
 
 	}
@@ -163,16 +178,20 @@ public class Screen extends JFrame {
 		chatScreen.setTitle("Messaging " + title);
 		chatScreen.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		chatScreen.setPreferredSize(new Dimension(450, 250));
-		Thread t = new Thread(link::checkHello);
+		Thread t = new Thread(() -> {
+			while (!link.checkHello());
+		});
 		//negotiate connection
 		t.start();
 		try {
-			while (t.isAlive())
+			while (t.isAlive()) {
+				Thread.sleep(500);
 				link.sayHello();
+			}
 			t.join();
+			chatScreen.lincoln.write("Associate connection negotiated.");
 		} catch (InterruptedException e) {
-			e.printStackTrace();
-			System.exit(1);
+			throw new RuntimeException(e);
 		}
 		//
         chatScreen.threadCommand.execute(() -> {
@@ -180,13 +199,16 @@ public class Screen extends JFrame {
 			while (true) {
 				if ((line = link.recvMessage()) != null) {
 					chat.append(title + ": " + line + '\n');
+					chatScreen.lincoln.write("Received and displayed associate message.");
 				} else {
 					link.close();
 					chatScreen.setVisible(false);
 					chatScreen.previousScreen.setVisible(true);
+					chatScreen.lincoln.write("chatScreen disabled; returned to previous Screen.");
 				}
 			}
 		});
+		chatScreen.lincoln.write("New chatScreen established.");
 		return chatScreen;
 
 	}
