@@ -1,4 +1,4 @@
-package client.util;
+package swiss.util;
 
 import java.io.File;
 import java.io.FileWriter;

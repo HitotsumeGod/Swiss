@@ -1,4 +1,4 @@
-package client.util;
+package swiss.util;
 
 public final class UserNetworkIdentifier {
 

@@ -1,8 +1,6 @@
-package client.screen;
+package swiss.screen;
 
 import java.awt.Dimension;
-import java.net.DatagramSocket;
-import java.net.SocketException;
 import java.util.ArrayList;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -16,9 +14,9 @@ import java.awt.Component;
 import java.awt.BorderLayout;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import client.net.TwoWayLink;
-import client.util.Logger;
-import client.util.UserNetworkIdentifier;
+import swiss.net.Link;
+import swiss.util.Logger;
+import swiss.util.UserNetworkIdentifier;
 
 public class Screen extends JFrame {
 
@@ -53,6 +51,12 @@ public class Screen extends JFrame {
 
 	}
 
+	/**
+	 * Creates and returns the standard menu window.
+	 *
+	 * @param previousScreen	the previous Screen utilized by the application
+	 * @return					a Screen formatted for network communication
+	 */
 	public static Screen createMenuScreen(Screen previousScreen) {
 
 		ArrayList<Component> components = new ArrayList<>();
@@ -63,13 +67,8 @@ public class Screen extends JFrame {
 		JLabel textLabel = new JLabel("Welcome to Swiss!");
 		JButton connectButton = new JButton("CONNECT");
 		JButton getButton = new JButton("GET");
-		DatagramSocket socket;
+		Link l = new Link();
 
-		try {
-			socket = new DatagramSocket(BroadNetworking.BINDPORT);
-		} catch (SocketException e) {
-			throw new RuntimeException(e);
-		}
 		components.add(inputPanel);
 		components.add(menuScreen);
 		inputPanel.setLayout(new BoxLayout(inputPanel, BoxLayout.Y_AXIS));
@@ -78,9 +77,7 @@ public class Screen extends JFrame {
 			menuScreen.updateScreen();
 			JTextArea idField = new JTextArea(1, 16);
 			idField.setText("Your UNetID is : ");
-			String s = BroadNetworking.getSTUN(socket).toString();
-			idField.append(s);
-			System.out.println(s);
+			idField.append(l.getSTUN().toString());
 			idField.setEditable(false);
 			JTextField answerText = new JTextField(16);
 			answerText.addActionListener(eb -> {
@@ -95,8 +92,8 @@ public class Screen extends JFrame {
 				components.add(inputPanel);
 				components.add(menuScreen);
 				menuScreen.threadCommand.execute(() -> {
-					TwoWayLink link = new TwoWayLink(new UserNetworkIdentifier(s1), socket);
-					Screen chatScreen = Screen.createChatScreen(s1, link, menuScreen);
+					l.setPeer(new UserNetworkIdentifier(s1));
+					Screen chatScreen = Screen.createChatScreen(s1, l, menuScreen);
 					answerText.setText(null);
 					chatScreen.updateScreen();
 				});
@@ -144,7 +141,17 @@ public class Screen extends JFrame {
 
 	}
 
-	public static Screen createChatScreen(String title, TwoWayLink link, Screen previousScreen) {
+	/**
+	 * Creates and returns a standard chat dialog window.
+	 * The window created contains all of application's networking components,
+	 * and should thus be observed as the umbrella facilitation of said logic.
+	 *
+	 * @param title				the title for the window
+	 * @param link				the network link to be used for P2P communication
+	 * @param previousScreen	the previous Screen utilized by the application
+	 * @return					a Screen formatted for network communication
+	 */
+	public static Screen createChatScreen(String title, Link link, Screen previousScreen) {
 
 		Screen chatScreen = new Screen(previousScreen);
 		JPanel infoPanel = new JPanel();

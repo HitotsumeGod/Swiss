@@ -30,12 +30,12 @@ java {
 jar {
     manifest {
         attributes(
-                'Main-Class': 'client.Pilot'
+                'Main-Class': 'swiss.Pilot'
         )
     }
 }
 
 application {
     // Define the main class for the application.
-    mainClass = 'client.Pilot'
+    mainClass = 'swiss.Pilot'
 }

@@ -1,7 +1,7 @@
-package client;
+package swiss;
 
 import java.io.File;
-import client.screen.Screen;
+import swiss.screen.Screen;
 
 public class Pilot {
 
