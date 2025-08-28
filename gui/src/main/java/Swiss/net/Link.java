@@ -1,4 +1,4 @@
-package swiss.net;
+package Swiss.net;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -10,8 +10,8 @@ import java.net.UnknownHostException;
 import java.nio.channels.AsynchronousCloseException;
 import java.security.SecureRandom;
 import java.util.Arrays;
-import swiss.util.Logger;
-import swiss.util.UserNetworkIdentifier;
+import Swiss.util.Logger;
+import Swiss.util.UserNetworkIdentifier;
 
 /**
  * The Link class is Swiss's networking abstraction.

@@ -11,4 +11,5 @@ plugins {
 }
 
 rootProject.name = 'Swiss'
-include('app')
+include('gui')
+include('cli')

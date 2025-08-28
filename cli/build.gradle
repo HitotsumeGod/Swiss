@@ -15,11 +15,6 @@ repositories {
     mavenCentral()
 }
 
-dependencies {
-    // This dependency is used by the application.
-    implementation libs.guava
-}
-
 // Apply a specific Java toolchain to ease working on different environments.
 java {
     toolchain {
@@ -30,12 +25,12 @@ java {
 jar {
     manifest {
         attributes(
-                'Main-Class': 'swiss.Pilot'
+                'Main-Class': 'Swiss.Pilot'
         )
     }
 }
 
 application {
     // Define the main class for the application.
-    mainClass = 'swiss.Pilot'
+    mainClass = 'Swiss.Pilot'
 }
