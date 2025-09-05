@@ -1,4 +1,4 @@
-package Swiss.net;
+package shared.net;
 
 /**
  * The Conversation class represents a two-way system of communication.

@@ -1,4 +1,4 @@
-package Swiss.util;
+package shared;
 
 import java.io.File;
 import java.io.FileWriter;

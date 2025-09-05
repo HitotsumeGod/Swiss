@@ -14,10 +14,10 @@ import javax.swing.BoxLayout;
 import java.awt.BorderLayout;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import Swiss.net.Conversation;
-import Swiss.net.Link;
-import Swiss.util.Logger;
-import Swiss.util.UserNetworkIdentifier;
+import shared.net.Conversation;
+import shared.net.Link;
+import shared.Logger;
+import shared.UserNetworkIdentifier;
 
 public class Screen extends JFrame {
 

@@ -1,4 +1,4 @@
-package Swiss.net;
+package shared.net;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -10,8 +10,11 @@ import java.net.UnknownHostException;
 import java.nio.channels.AsynchronousCloseException;
 import java.security.SecureRandom;
 import java.util.Arrays;
-import Swiss.util.Logger;
-import Swiss.util.UserNetworkIdentifier;
+import shared.Logger;
+import shared.UserNetworkIdentifier;
+import shared.PubKeyLock;
+import shared.SymKeyLock;
+import shared.Hasher;
 
 /**
  * The Link class is Swiss's networking abstraction.
@@ -25,9 +28,13 @@ import Swiss.util.UserNetworkIdentifier;
  */
 public class Link {
 
+	private static final String VERS = "SWISS V1.3E";
 	public static final int BINDPORT = 13692;
 	private static final int STUNHDRLEN = 20;
 	private static final int STUNIDLEN = 12;
+	private static final String HEADER = VERS + " xX%67%Xx";
+	private static final int HEADERLEN = HEADER.length();
+	private static final int MAXMSGLEN = 256;
 	private static final int[] MAGICCOOKIE = { 0x21, 0x12, 0xA4, 0x42 };
 	private static final InetSocketAddress[] STUNSERVERS = {
 			new InetSocketAddress("stun.l.google.com", 19302),
@@ -36,9 +43,9 @@ public class Link {
 			new InetSocketAddress("stun3.l.google.com", 3478),
 			new InetSocketAddress("stun4.l.google.com", 19302)
 	};
-	private static final String HEADER = "SWISS V1 ***000***";
-	private static final byte[] headerBuffer = new byte[HEADER.getBytes().length], hello = { (byte) 0x06, (byte) 0x07 };
+	private static final byte[] hello = { (byte) 0x06, (byte) 0x07 };
 	private final Logger lincoln;
+	private final PubKeyLock pkey;
 	private final DatagramSocket dsock;
 	private InetSocketAddress peerAddress;
 	private DatagramPacket send, receive;
@@ -46,6 +53,7 @@ public class Link {
 	public Link() {
 
 		lincoln = new Logger("logs/twowaylink.log", false);
+		pkey = new PubKeyLock();
         try {
             dsock = new DatagramSocket(BINDPORT);
         } catch (SocketException e) {
@@ -58,6 +66,7 @@ public class Link {
 
 		try {
 			lincoln = new Logger("logs/twowaylink.log", false);
+			pkey = new PubKeyLock();
 			dsock = new DatagramSocket(BINDPORT);
 			setPeer(id);
 			lincoln.write("Link established with " + peerAddress.getAddress().toString() +
@@ -113,12 +122,10 @@ public class Link {
 	public void sendMessage(String msg) {
 
 		try {
-			byte[] bbuffer = HEADER.getBytes();
+			byte[] bbuffer = new byte[HEADERLEN + msg.getBytes().length];
+            System.arraycopy(HEADER.getBytes(), 0, bbuffer, 0, HEADERLEN);
+			System.arraycopy(msg.getBytes(), 0, bbuffer, HEADERLEN, msg.getBytes().length);
 			send = new DatagramPacket(bbuffer, bbuffer.length, peerAddress.getAddress(), peerAddress.getPort());
-			dsock.send(send);
-			bbuffer = msg.getBytes();
-			send.setData(bbuffer);
-			send.setLength(bbuffer.length);
 			dsock.send(send);
 		} catch (IOException io) {
 			throw new RuntimeException(io);
@@ -130,21 +137,20 @@ public class Link {
 	public String recvMessage() {
 
 		String recvStr = null;
-		byte[] bbuffer = null;
+		byte[] mainBuffer = new byte[MAXMSGLEN], headerBuffer = new byte[HEADERLEN];
 
 		try {
 			receive = new DatagramPacket(headerBuffer, headerBuffer.length);
 			dsock.receive(receive);
-			if (new String(receive.getData()).equals(HEADER)) {
-				bbuffer = new byte[256];
-				receive = new DatagramPacket(bbuffer, bbuffer.length);
-				dsock.receive(receive);
+			System.arraycopy(receive.getData(), 0, mainBuffer, 0, HEADERLEN);
+			if (Arrays.equals(mainBuffer, HEADER.getBytes()))
 				recvStr = new String(receive.getData());
-			}
-		} catch (AsynchronousCloseException | SocketException e) {} catch (IOException e) {
+		} catch (AsynchronousCloseException | SocketException e) {
+			throw new RuntimeException(e);
+		} catch (IOException e) {
             throw new RuntimeException(e);
         }
-		lincoln.write("Received Swiss message from associate.");
+		lincoln.write("Received message from associate.");
         return recvStr;
 
 	}

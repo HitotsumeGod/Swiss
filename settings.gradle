@@ -13,3 +13,4 @@ plugins {
 rootProject.name = 'Swiss'
 include('gui')
 include('cli')
+include('shared')
