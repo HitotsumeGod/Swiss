@@ -5,8 +5,7 @@ import java.io.InputStreamReader;
 import java.io.BufferedReader;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import shared.SessionLink;
+import shared.SessionLocator;
 import shared.net.Link;
 import shared.net.Conversation;
 
@@ -24,16 +23,9 @@ public class Pilot {
         try {
             got = input.readLine();
             if (got.equalsIgnoreCase("connect")) {
-                System.out.println("Please input a UNetID.");
-                got = input.readLine();
-                pool = Executors.newCachedThreadPool();
-                pool.execute(() -> {
-                    try {
-                        session = new Conversation(new Link(new SessionLink(input.readLine())));
-                    } catch (IOException io) {
-                        throw new RuntimeException(io);
-                    }
-                });
+                Link l = new Link();
+                SessionLocator sus = new SessionLocator(l.querySTUNServer());
+                System.out.println(sus.toString());
             }
         } catch (IOException io) {
             throw new RuntimeException(io);

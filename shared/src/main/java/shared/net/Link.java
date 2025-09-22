@@ -2,6 +2,7 @@ package shared.net;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
@@ -11,7 +12,7 @@ import java.nio.channels.AsynchronousCloseException;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import shared.Logger;
-import shared.SessionLink;
+import shared.SessionLocator;
 
 /**
  * The Link class is Swiss's networking abstraction.
@@ -25,7 +26,7 @@ import shared.SessionLink;
  */
 public class Link {
 
-	private static final String VERS = "SWISS V1.3E";
+    private static final String VERS = "SWISS V1.3E";
 	public static final int BINDPORT = 13692;
 	private static final int STUNHDRLEN = 20;
 	private static final int STUNIDLEN = 12;
@@ -34,15 +35,14 @@ public class Link {
 	private static final int MAXMSGLEN = 256;
 	private static final int[] MAGICCOOKIE = { 0x21, 0x12, 0xA4, 0x42 };
 	private static final InetSocketAddress[] STUNSERVERS = {
-			new InetSocketAddress("stun.l.google.com", 19302),
-			new InetSocketAddress("stun1.l.google.com", 3478),
-			new InetSocketAddress("stun2.l.google.com", 19302),
-			new InetSocketAddress("stun3.l.google.com", 3478),
-			new InetSocketAddress("stun4.l.google.com", 19302)
+	    new InetSocketAddress("stun.l.google.com", 19302),
+		new InetSocketAddress("stun1.l.google.com", 3478),
+		new InetSocketAddress("stun2.l.google.com", 19302),
+		new InetSocketAddress("stun3.l.google.com", 3478),
+		new InetSocketAddress("stun4.l.google.com", 19302)
 	};
 	private static final byte[] hello = { (byte) 0x06, (byte) 0x07 };
 	private final Logger lincoln;
-	private final PubKeyLock pkey;
 	private final DatagramSocket dsock;
 	private InetSocketAddress peerAddress;
 	private DatagramPacket send, receive;
@@ -50,7 +50,6 @@ public class Link {
 	public Link() {
 
 		lincoln = new Logger("logs/twowaylink.log", false);
-		pkey = new PubKeyLock();
         try {
             dsock = new DatagramSocket(BINDPORT);
         } catch (SocketException e) {
@@ -59,13 +58,12 @@ public class Link {
 
     }
 
-	public Link(SessionLink id) {
+	public Link(SessionLocator loc) {
 
 		try {
 			lincoln = new Logger("logs/twowaylink.log", false);
-			pkey = new PubKeyLock();
 			dsock = new DatagramSocket(BINDPORT);
-			setPeer(id);
+			setPeer(loc);
 			lincoln.write("Link established with " + peerAddress.getAddress().toString() +
 					':' +
 					peerAddress.getPort() +
@@ -76,17 +74,7 @@ public class Link {
 
 	}
 	
-	public void setPeer(SessionLink id) {
-
-		String decrypted = SessionLink.decrypt(id);
-        try {
-            peerAddress = new InetSocketAddress(InetAddress.getByName(decrypted.substring(0, decrypted.indexOf(':'))),
-                    Integer.parseInt(decrypted.substring(decrypted.indexOf(':') + 1)));
-        } catch (UnknownHostException e) {
-            throw new RuntimeException(e);
-        }
-
-    }
+	public void setPeer(SessionLocator loc) { peerAddress = loc.getAddress(); }
 
 	public void sayHello() {
 
@@ -152,7 +140,7 @@ public class Link {
 
 	}
 
-	public SessionLink getSTUN() {
+	public InetSocketAddress querySTUNServer() {
 
 		DatagramPacket messagePacket = null, responsePacket = null;
 		int[] hdr = null;
@@ -217,7 +205,11 @@ public class Link {
 				':' +
 				asciiPort +
 				'.');
-		return new SessionLink(trueAddress.toString(), Integer.toString(asciiPort));
+        try {
+		    return new InetSocketAddress(Inet4Address.getByAddress(translatedAddress), asciiPort);
+        } catch (UnknownHostException e) {
+            throw new RuntimeException(e);
+        }
 
 	}
 
