@@ -17,7 +17,7 @@ import java.util.concurrent.Executors;
 import shared.net.Conversation;
 import shared.net.Link;
 import shared.Logger;
-import shared.UserNetworkIdentifier;
+import shared.SessionLink;
 
 public class Screen extends JFrame {
 
@@ -93,7 +93,7 @@ public class Screen extends JFrame {
 				answerText.setEditable(false);
 				answerText.removeActionListener(answerText.getActionListeners()[0]);
 				menuScreen.threadCommand.execute(() -> {
-					l.setPeer(new UserNetworkIdentifier(s1));
+					l.setPeer(new SessionLink(s1));
 					Screen chatScreen = Screen.createChatScreen(s1, l, menuScreen);
 					answerText.setText(null);
 					chatScreen.updateScreen();
@@ -119,7 +119,7 @@ public class Screen extends JFrame {
 					menuScreen.focusDummy.requestFocus();
 				} else {
 					translatedText.setText("UNetID : ");
-					translatedText.append(UserNetworkIdentifier.encrypt(s1));
+					translatedText.append(SessionLink.encrypt(s1));
 				}
 			});
 			answerText.addFocusListener(new FocusListener() {

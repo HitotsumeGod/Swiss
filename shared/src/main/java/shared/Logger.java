@@ -18,7 +18,7 @@ public class Logger {
 			logfile.createNewFile();
 			writer = new FileWriter(logfile, append);
 		} catch (IOException io) {
-			io.printStackTrace();
+			throw new RuntimeException(io);
 		}
        
 	}
@@ -33,7 +33,7 @@ public class Logger {
 			writer.write((int) '\n');
 			writer.flush();
 		} catch (IOException io) {
-			io.printStackTrace();
+			throw new RuntimeException(io);
 		}
 
 	}
@@ -48,7 +48,7 @@ public class Logger {
 			writer.write((int) '\n');
 			writer.flush();
 		} catch (IOException io) {
-			io.printStackTrace();
+			throw new RuntimeException(io);
 		}
 
 	}
@@ -58,7 +58,7 @@ public class Logger {
 		try {
 			writer.close();
 		} catch (IOException io) {
-			io.printStackTrace();
+			throw new RuntimeException(io);
 		}
 
 	}

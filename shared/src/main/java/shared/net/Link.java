@@ -11,10 +11,7 @@ import java.nio.channels.AsynchronousCloseException;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import shared.Logger;
-import shared.UserNetworkIdentifier;
-import shared.PubKeyLock;
-import shared.SymKeyLock;
-import shared.Hasher;
+import shared.SessionLink;
 
 /**
  * The Link class is Swiss's networking abstraction.
@@ -62,7 +59,7 @@ public class Link {
 
     }
 
-	public Link(UserNetworkIdentifier id) {
+	public Link(SessionLink id) {
 
 		try {
 			lincoln = new Logger("logs/twowaylink.log", false);
@@ -79,9 +76,9 @@ public class Link {
 
 	}
 	
-	public void setPeer(UserNetworkIdentifier id) {
+	public void setPeer(SessionLink id) {
 
-		String decrypted = UserNetworkIdentifier.decrypt(id);
+		String decrypted = SessionLink.decrypt(id);
         try {
             peerAddress = new InetSocketAddress(InetAddress.getByName(decrypted.substring(0, decrypted.indexOf(':'))),
                     Integer.parseInt(decrypted.substring(decrypted.indexOf(':') + 1)));
@@ -155,7 +152,7 @@ public class Link {
 
 	}
 
-	public UserNetworkIdentifier getSTUN() {
+	public SessionLink getSTUN() {
 
 		DatagramPacket messagePacket = null, responsePacket = null;
 		int[] hdr = null;
@@ -220,7 +217,7 @@ public class Link {
 				':' +
 				asciiPort +
 				'.');
-		return new UserNetworkIdentifier(trueAddress.toString(), Integer.toString(asciiPort));
+		return new SessionLink(trueAddress.toString(), Integer.toString(asciiPort));
 
 	}
 
