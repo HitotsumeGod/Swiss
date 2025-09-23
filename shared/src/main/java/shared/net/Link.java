@@ -44,7 +44,7 @@ public class Link {
 	private static final byte[] hello = { (byte) 0x06, (byte) 0x07 };
 	private final Logger lincoln;
 	private final DatagramSocket dsock;
-	private InetSocketAddress peerAddress;
+	private InetSocketAddress peerAddress = null;
 	private DatagramPacket send, receive;
 
 	public Link() {
@@ -78,6 +78,8 @@ public class Link {
 
 	public void sayHello() {
 
+		if (peerAddress == null)
+			throw new RuntimeException("null peer address");
 		try {
 			send = new DatagramPacket(hello, hello.length, peerAddress.getAddress(), peerAddress.getPort());
 			dsock.send(send);
