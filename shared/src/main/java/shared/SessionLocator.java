@@ -6,7 +6,9 @@ import java.net.InetSocketAddress;
 import java.net.ProtocolException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Random;
 
 /**
  * The SessionLocator class serves as a peer-to-peer invitatation to a Swiss
@@ -28,6 +30,9 @@ public final class SessionLocator {
 
     private static final int FIXEDLENGTH = 15;
     private static final int VARIANCE = 7;
+    private static final int PRINTRANGECEIL = 127;
+    private static final int PRINTRANGEFLOOR = 32;
+    private static final byte DENOTEVARIANCE = '&';
 	private static final byte[] PROTOCOLHEADER = { 's', 'w', 'i', 's', 's', ':', '/', '/' };
     private static final byte ENCRYPTIONMASK = (byte) 0b10000000;
     private final InetSocketAddress sessionAddress;
@@ -49,6 +54,46 @@ public final class SessionLocator {
         } catch (UnknownHostException e) {
             throw new RuntimeException(e);
         }
+
+    }
+
+    private ArrayList<Byte> obscure(ArrayList<Byte> bytes) {
+
+        Random rand = new Random();
+        int randMax = 20, randMin = 1;
+        ArrayList<Byte> obscured = new ArrayList<>();
+        ArrayList<Byte> movements = new ArrayList<>();
+        ArrayList<String> movementsASCII = new ArrayList<>();
+
+        for (Byte b : bytes)
+            if (b < PRINTRANGEFLOOR) {
+                movements.add((byte) (PRINTRANGEFLOOR - b + (rand.nextInt(randMax - randMin) + randMin)));
+                if (movements.getLast() == DENOTEVARIANCE)
+                    movements.set(movements.size() - 1, (byte) (movements.getLast() + 1));
+                obscured.add(DENOTEVARIANCE);
+                obscured.add((byte) (b + movements.getLast()));
+            } else if (b > PRINTRANGECEIL) {
+                movements.add((byte) (b - PRINTRANGECEIL + (rand.nextInt(randMax - randMin) + randMin)));
+                if (movements.getLast() == DENOTEVARIANCE)
+                    movements.set(movements.size() - 1, (byte) (movements.getLast() + 1));
+                obscured.add(DENOTEVARIANCE);
+                obscured.add((byte) (b - movements.getLast()));
+            } else
+                obscured.add(b);
+        for (Byte b : movements)
+            movementsASCII.add(String.valueOf(b));
+        ArrayList<Byte> finale = new ArrayList<>(obscured);
+        finale.add((byte) ':');
+        for (String s : movementsASCII)
+            for (byte b : s.getBytes())
+                finale.add(b);
+        System.out.println(finale.toString());
+        return finale;
+    }
+
+    private ArrayList<Byte> unobscure(ArrayList<Byte> bytes) {
+
+
 
     }
 
