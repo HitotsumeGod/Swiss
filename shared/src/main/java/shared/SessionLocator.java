@@ -24,9 +24,7 @@ public final class SessionLocator {
 
     }
 
-    private static final int FIXEDLENGTH = 15;
-    private static final int VARIANCE = 7;
-    private static final int PRINTRANGECEIL = 127;
+    private static final int PRINTRANGECEIL = 126;
     private static final int PRINTRANGEFLOOR = 32;
     private static final char DENOTEPOSITIVEVARIANCE = '<';
     private static final char DENOTENEGATIVEVARIANCE = '>';
@@ -35,29 +33,41 @@ public final class SessionLocator {
 	private static final String PROTOCOLHEADER = "swiss://";
     private static final int ENCRYPTIONMASK = (int) 0b10000000;
     private final InetSocketAddress sessionAddress;
-    private int sessionOptions = (int) 0;
+    private int sessionOptions = 0;
 
     public SessionLocator(String locatorString) throws BadSessionLocatorFormatException {
 
         ArrayList<Character> locatorBytes = new ArrayList<>();
-        ArrayList<Character> locatorInfo, locatorVariance, translatedLocatorInfo;
+        ArrayList<Character> locatorInfo = new ArrayList<>();
+        ArrayList<Integer> locatorVariance = new ArrayList<>();
+        ArrayList<Character> translatedLocatorInfo = new ArrayList<>();
 
-        for (int i = 0; i < locatorString.length(); i++)
-            locatorBytes.add((char) (locatorString.charAt(i)));
-        locatorBytes = unobscure(locatorBytes);
+        //parse string in character array, skipping header
+        for (int i = locatorString.indexOf(DENOTESECTION) + 2; i < locatorString.length(); i++)
+            locatorBytes.add(locatorString.charAt(i));
+        //parse info into array
+        for (int i = 0; i < locatorBytes.indexOf(DENOTESECTION); i++)
+            locatorInfo.add(locatorBytes.get(i));
+        //parse shifts into integers
+        StringBuilder temp = new StringBuilder();
+        for (int i = locatorBytes.indexOf(DENOTESECTION) + 1; i < locatorBytes.size(); i++)
+            if (locatorBytes.get(i) == DENOTESHIFTDELIM)
+                locatorVariance.add(Integer.valueOf(temp.toString()));
+            else
+                temp.append(locatorBytes.get(i));
+        translatedLocatorInfo = unobscure(locatorInfo, locatorVariance);
         byte[] addr = new byte[4];
-        for (int i = 0; i < addr.length; i++)
-            addr[i] = (byte) ((char) locatorBytes.get(i));
-        int port = ((byte) ((char) locatorBytes.get(5))) << 8 | ((byte) ((char) locatorBytes.get(6)));
-        for (byte b : addr)
-            System.out.printf("%02X ", b);
-        System.out.println();
-        System.out.println(port);
+        for (int i = 0; i < addr.length; i++) {
+            addr[i] = (byte) ((char) translatedLocatorInfo.get(i));
+        }
+        int port = ((byte) ((char) translatedLocatorInfo.get(4))) << 8 | ((byte) ((char) translatedLocatorInfo.get(5)));
         try {
             sessionAddress = new InetSocketAddress(InetAddress.getByAddress(addr), port);
         } catch (UnknownHostException e) {
             throw new RuntimeException(e);
         }
+        System.out.println(sessionAddress.getAddress().toString());
+        System.out.println(sessionAddress.getPort());
 
     }
 
@@ -66,6 +76,10 @@ public final class SessionLocator {
     /**
      * Obfuscates SessionLocator info data, and makes it human-readable,
      * in prepraration for being sent across a network as a string.
+     *
+     * This method *does not* assemble shifts into strings, but rather
+     * appends them in their integral forms. Parsing and conversion
+     * to String form should be handled by this class's toString().
      * @param bytes An ArrayList of bytes containing an IPv4 address,
      *              computer port number, and options bitfield. The Swiss
      *              header should *not* be prepended.
@@ -74,69 +88,43 @@ public final class SessionLocator {
      */
     public ArrayList<Character> obscure(ArrayList<Character> bytes) {
 
-        ArrayList<Character> obscured = new ArrayList<Character>();
-        ArrayList<Character> shifts = new ArrayList<Character>();
+        ArrayList<Character> obscured = new ArrayList<>();
+        ArrayList<Character> shifts = new ArrayList<>();
         Random rand = new Random();
         int max = 20, min = 1;
 
         for (Character b : bytes)
             if (b < PRINTRANGEFLOOR) {
-                System.out.printf("< %02X\n", (byte) (char) b);
                 shifts.add((char) (PRINTRANGEFLOOR - b + (rand.nextInt(max - min) + min)));
                 obscured.add(DENOTEPOSITIVEVARIANCE);
                 obscured.add((char) (b + shifts.getLast()));
             } else if (b > PRINTRANGECEIL) {
-                System.out.printf("> %02X\n", (byte) (char) b);
                 shifts.add((char) (b - PRINTRANGECEIL + (rand.nextInt(max - min) + min)));
                 obscured.add(DENOTENEGATIVEVARIANCE);
                 obscured.add((char) (b - shifts.getLast()));
             } else
                 obscured.add(b);
         obscured.add('/');
-        ArrayList<String> shiftStrings = new ArrayList<>();
-        for (Character c : shifts)
-            shiftStrings.add(Integer.toString((int) ((char) c) & 0xFF));
-        for (String s : shiftStrings) {
-            for (int i = 0; i < s.length(); i++)
-                obscured.add(s.charAt(i));
-            obscured.add(DENOTESHIFTDELIM);
-        }
+        obscured.addAll(shifts);
         return obscured;
 
     }
 
-    public ArrayList<Character> unobscure(ArrayList<Character> bytes) throws BadSessionLocatorFormatException {
+    public ArrayList<Character> unobscure(ArrayList<Character> info, ArrayList<Integer> shifts) {
 
-        ArrayList<Character> unobscured = new ArrayList<>();
-        ArrayList<Character> temp = new ArrayList<>();
-        ArrayList<Character> info, shifts;
-        ArrayList<String> shiftStrings = new ArrayList<>();
+        ArrayList<Character> translated = new ArrayList<>();
+        char c;
 
-        for (int i = 0; i < PROTOCOLHEADER.length(); i++)
-            if (bytes.get(i) != PROTOCOLHEADER.charAt(i))
-                throw new BadSessionLocatorFormatException("header malformed");
-        bytes = (ArrayList<Character>) bytes.subList(PROTOCOLHEADER.length(), bytes.size());
-        info = (ArrayList<Character>) bytes.subList(0, bytes.indexOf('/'));
-        shifts = (ArrayList<Character>) bytes.subList(bytes.indexOf('/') + 1, bytes.size());
-        for (int i = 0, lastDelim = 0; i < shifts.size(); i++)
-            if (shifts.get(i) == DENOTESHIFTDELIM) {
-                char[] tempArray = new char[i];
-                for (int ii = ++lastDelim; ii < i; ii++)
-                    tempArray[ii] = shifts.get(ii);
-                shiftStrings.add(new String(tempArray));
-                lastDelim = i;
-            }
-        for (int i = 0, ii = 0; i < info.size(); i++)
-            if (info.get(i) == DENOTEPOSITIVEVARIANCE)
-                temp.add((char) (info.get(i++ + 1) + Integer.parseInt(shiftStrings.get(ii))));
-            else if (info.get(i) == DENOTENEGATIVEVARIANCE)
-                temp.add((char) (info.get(i++ + 1) - Integer.parseInt(shiftStrings.get(ii))));
-            else if (info.get(i) == DENOTESECTION)
-                break;
+        for (int i = 0, ii = 0; i < info.size(); i++) {
+            c = info.get(i);
+            if (c == DENOTENEGATIVEVARIANCE)
+                info.set(i + 1, (char) (info.get(i + 1) + shifts.get(ii++)));
+            else if (c == DENOTEPOSITIVEVARIANCE)
+                info.set(i + 1, (char) (info.get(i + 1) - shifts.get(ii++)));
             else
-                temp.add(info.get(i));
-        return temp;
-
+                translated.add(c);
+        }
+        return translated;
     }
 
     public void enableEncryption() { sessionOptions |= ENCRYPTIONMASK; }
@@ -145,23 +133,31 @@ public final class SessionLocator {
 
     public InetSocketAddress getAddress() { return sessionAddress; }
 
-	public int length() { return FIXEDLENGTH; }
+    //TODO: FIX
+	public int length() { return -1; }
 
 	@Override
 	public String toString() {
 
         ArrayList<Character> toObscure = new ArrayList<>();
+        ArrayList<String> shiftStrings = new ArrayList<>();
         StringBuilder bob = new StringBuilder();
 
         for (byte b : sessionAddress.getAddress().getAddress())
             toObscure.add((Character) ((char) b));
         toObscure.add((char) (sessionAddress.getPort() >> 8));
-        toObscure.add((char) sessionAddress.getPort());
+        toObscure.add((char) (sessionAddress.getPort() & 0xFF));
         toObscure.add((Character) (char) sessionOptions);
         toObscure = obscure(toObscure);
+        for (int i = toObscure.indexOf(DENOTESECTION) + 1; i < toObscure.size(); i++)
+            shiftStrings.add(Integer.toString((int) ((char) toObscure.get(i)) & 0xFF));
         bob.append(PROTOCOLHEADER);
-        for (Character c : toObscure)
-            bob.append(c);
+        for (int i = 0; i <= toObscure.indexOf(DENOTESECTION); i++)
+            bob.append(toObscure.get(i));
+        for (String s : shiftStrings) {
+            bob.append(s);
+            bob.append(DENOTESHIFTDELIM);
+        }
         return bob.toString();
     
     }
